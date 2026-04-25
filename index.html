@@ -1,0 +1,2273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hojas de Vida">
+<meta name="theme-color" content="#2e3329">
+<title>Hojas de Vida — Ejército de Chile</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+:root{
+  --ol:#4a5240;--old:#2e3329;--oll:#6b7560;--olp:#eef0ea;--olm:#c8ccbf;
+  --go:#b8960c;--gl:#f0d060;--gp:#fdf6d8;
+  --da:#8b2020;--db:#fdf0f0;--dc:#f0c0c0;
+  --su:#1a5c2a;--sb:#f0faf2;--sc:#b2deba;
+  --wa:#7a5000;--wb:#fdf6e3;--wc:#e8d090;
+  --ia:#1a3a5c;--ib:#eef4fb;--ic:#b8cce0;
+  --pa:#fafaf7;--ink:#1a1c17;--mu:#6b7560;
+  --bo:#d4d8ce;--bd:#b8bdae;
+  --sh:0 2px 16px rgba(30,35,20,.10);
+  --shl:0 8px 32px rgba(30,35,20,.16);
+  --r:8px;--rl:14px;--rx:20px;
+  --fn:'IBM Plex Sans',sans-serif;--mo:'IBM Plex Mono',monospace;
+  --th:56px;--nb:60px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:var(--fn);background:var(--pa);color:var(--ink);overflow:hidden}
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+
+/* TOPBAR */
+.topbar{background:var(--old);color:#fff;padding:0 .75rem;display:flex;align-items:center;justify-content:space-between;height:var(--th);flex-shrink:0;z-index:50;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.brand{display:flex;align-items:center;gap:8px}
+.brand-icon{width:30px;height:30px;background:var(--go);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--old);font-family:var(--mo);flex-shrink:0}
+.brand-name{font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;line-height:1.1}
+.brand-sub{font-size:9px;opacity:.55;letter-spacing:.04em}
+.top-acts{display:flex;gap:5px;align-items:center}
+.icon-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:7px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;transition:background .15s;flex-shrink:0}
+.icon-btn:hover{background:rgba(255,255,255,.22)}
+.btn-save-top{background:var(--go);border:none;color:var(--old);border-radius:7px;padding:0 10px;height:34px;font-size:12px;font-weight:700;font-family:var(--fn);cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.btn-save-top:hover{background:var(--gl)}
+.btn-add-top{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:7px;padding:0 10px;height:34px;font-size:12px;font-weight:600;font-family:var(--fn);cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.btn-add-top:hover{background:rgba(255,255,255,.25)}
+
+/* SYNC */
+.sync-strip{background:var(--ol);color:rgba(255,255,255,.75);font-size:10px;letter-spacing:.04em;padding:3px .75rem;display:flex;align-items:center;gap:5px;flex-shrink:0;min-height:20px}
+.sync-dot{width:5px;height:5px;border-radius:50%;background:var(--gl);flex-shrink:0}
+.sync-dot.spin{animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* SCROLL */
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nb) + 1rem)}
+
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;height:var(--nb);background:#fff;border-top:1px solid var(--bo);display:flex;z-index:50;padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -2px 16px rgba(30,35,20,.08)}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;cursor:pointer;font-family:var(--fn);color:var(--mu);transition:color .15s;padding:5px 2px;position:relative}
+.ni.on{color:var(--old)}
+.ni .nic{font-size:18px;line-height:1}
+.ni .nil{font-size:8px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.ni.on::after{content:'';position:absolute;top:0;left:20%;right:20%;height:3px;background:var(--go);border-radius:0 0 3px 3px}
+.nbadge{position:absolute;top:3px;right:calc(50% - 18px);background:var(--da);color:#fff;border-radius:10px;padding:1px 5px;font-size:9px;font-weight:700}
+
+/* SECTIONS */
+.sec{display:none;padding:.75rem}.sec.on{display:block}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:.75rem}
+@media(max-width:380px){.metrics{grid-template-columns:repeat(2,1fr)}}
+.met{background:#fff;border:1px solid var(--bo);border-radius:var(--r);padding:10px 6px;text-align:center}
+.met-v{font-size:20px;font-weight:700;font-family:var(--mo);color:var(--old)}
+.met-l{font-size:9px;color:var(--mu);margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+
+/* CARDS */
+.card{background:#fff;border:1px solid var(--bo);border-radius:var(--rl);overflow:hidden;margin-bottom:8px}
+.ch{background:var(--olp);border-bottom:1px solid var(--bo);padding:9px 12px;display:flex;align-items:center;justify-content:space-between}
+.cht{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--old)}
+
+/* PERSON ITEMS */
+.pi{padding:11px 12px;border-bottom:1px solid var(--bo);display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .1s}
+.pi:last-child{border-bottom:none}
+.pi:hover,.pi:active{background:var(--olp)}
+.av{width:38px;height:38px;border-radius:50%;background:var(--ol);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;font-family:var(--mo)}
+.pinfo{flex:1;min-width:0}
+.pname{font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.psub{font-size:10px;color:var(--mu);margin-top:1px}
+.pright{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+.tmv{font-size:15px;font-weight:700;font-family:var(--mo)}
+.bw{height:4px;border-radius:2px;background:var(--olp);width:46px}
+.bf{height:100%;border-radius:2px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.bg{background:var(--sb);color:var(--su);border:1px solid var(--sc)}
+.br{background:var(--db);color:var(--da);border:1px solid var(--dc)}
+.bw2{background:var(--wb);color:var(--wa);border:1px solid var(--wc)}
+.bi{background:var(--ib);color:var(--ia);border:1px solid var(--ic)}
+.bk{background:var(--olp);color:var(--old);border:1px solid var(--bo)}
+.bp{background:var(--gp);color:#7a6000;border:1px solid #e0d080}
+
+/* ALERTS */
+.abox{border-radius:var(--r);padding:9px 12px;font-size:12px;margin-bottom:7px;line-height:1.5}
+.abox.warn{background:var(--wb);color:var(--wa);border:1px solid var(--wc)}
+.abox.info{background:var(--ib);color:var(--ia);border:1px solid var(--ic)}
+.abox.success{background:var(--sb);color:var(--su);border:1px solid var(--sc)}
+.abox.danger{background:var(--db);color:var(--da);border:1px solid var(--dc)}
+
+/* HV FORMAT */
+.hv-doc{background:#fff;border:1px solid var(--bo);border-radius:var(--rl);overflow:hidden}
+.hv-tbar{background:var(--old);color:#fff;text-align:center;padding:9px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;font-weight:500;font-family:var(--mo)}
+.hv-mstrip{background:var(--olp);border-bottom:1px solid var(--bo);padding:7px 12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.hv-ml{font-size:9px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
+.hv-mv{font-size:11px;font-weight:700;color:var(--old);margin-left:3px}
+.hv-cols{display:grid;grid-template-columns:68px 1fr 96px;background:var(--old)}
+.hv-ch{padding:5px 8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.8);border-right:1px solid rgba(255,255,255,.12);font-family:var(--mo)}
+.hv-ch:last-child{border-right:none}
+.hv-row{display:grid;grid-template-columns:68px 1fr 96px;border-bottom:1px solid var(--bo);min-height:58px;position:relative}
+.hv-row:last-child{border-bottom:none}
+.hv-row:hover{background:var(--olp)}
+.hvc{padding:7px 9px;border-right:1px solid var(--bo)}
+.hvc:last-child{border-right:none}
+.hvf{font-family:var(--mo);font-size:11px;font-weight:600;color:var(--old)}
+.hvfi{font-size:9px;color:var(--mu);margin-top:1px}
+.hvt{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:2px}
+.hvt.m{color:var(--su)}.hvt.d{color:var(--da)}.hvt.c{color:var(--ia)}.hvt.r{color:var(--ol)}
+.hvc2{font-size:10px;color:var(--mu);font-style:italic;margin-bottom:2px}
+.hvtx{font-size:11px;color:var(--ink);line-height:1.5}
+.hvrl{font-size:9px;color:var(--mu);margin-top:2px;font-family:var(--mo)}
+.hv-edit-btn{position:absolute;bottom:4px;right:4px;background:var(--olp);border:1px solid var(--bo);border-radius:4px;padding:2px 7px;font-size:9px;font-weight:700;color:var(--old);cursor:pointer;font-family:var(--fn);opacity:0;transition:opacity .15s}
+.hv-row:hover .hv-edit-btn{opacity:1}
+@media(max-width:600px){.hv-edit-btn{opacity:1}}
+.hv-firmas{text-align:center;font-size:9px}
+.hv-fn{font-weight:700;color:var(--old);font-size:9px}
+.hv-fg{color:var(--mu);font-size:9px}
+.hv-fsep{border-top:.5px solid var(--bo);padding-top:3px;margin-top:4px}
+
+/* DÍAS */
+.dpc{background:#fff;border:1px solid var(--bo);border-radius:var(--rl);margin-bottom:8px;overflow:hidden}
+.dph{padding:11px 12px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--bo);background:var(--olp)}
+.dprog{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--bo)}
+.dpb{flex:1;height:7px;background:var(--olp);border-radius:3px;overflow:hidden}
+.dpf{height:100%;border-radius:3px;transition:width .4s}
+.dpl{font-size:11px;font-family:var(--mo);font-weight:700;white-space:nowrap}
+.de{padding:8px 12px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--bo)}
+.de:last-child{border-bottom:none}
+.dei{width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.dein{flex:1;min-width:0}
+.ded{font-size:12px;font-weight:600;color:var(--ink)}
+.def{font-size:10px;color:var(--mu)}
+
+/* LICENCIAS */
+.lic-card{background:#fff;border:1px solid var(--bo);border-radius:var(--rl);margin-bottom:8px;overflow:hidden}
+.lic-head{padding:11px 12px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--bo);background:var(--db)}
+.lic-total-strip{padding:8px 12px;border-bottom:1px solid var(--bo);display:flex;gap:16px;background:var(--olp)}
+.lic-item{padding:8px 12px;border-bottom:1px solid var(--bo);display:flex;align-items:center;gap:9px}
+.lic-item:last-child{border-bottom:none}
+
+/* PUNTAJES */
+.ppc{background:#fff;border:1px solid var(--bo);border-radius:var(--rl);margin-bottom:8px;padding:12px}
+.pphead{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;flex-wrap:wrap;gap:6px}
+.pbrow{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.pblbl{font-size:10px;color:var(--mu);width:175px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pbo{flex:1;height:6px;border-radius:3px;background:var(--olp);overflow:hidden}
+.pbi{height:100%;border-radius:3px;transition:width .4s}
+.pbn{font-size:12px;font-weight:700;font-family:var(--mo);min-width:30px;text-align:right}
+
+/* EVINT */
+.evint-card{background:#fff;border:1px solid var(--bo);border-radius:var(--rl);margin-bottom:8px;overflow:hidden}
+.evint-head{background:var(--old);color:#fff;padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
+.evint-conc-head{background:var(--olp);border-bottom:1px solid var(--bo);border-top:1px solid var(--bo);padding:6px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--old)}
+.evint-row{display:flex;align-items:center;gap:0;border-bottom:.5px solid var(--bo);min-height:44px}
+.evint-row:last-child{border-bottom:none}
+.evint-desc{flex:1;padding:8px 10px;font-size:11px;color:var(--ink);line-height:1.4}
+.evint-radios{display:flex;flex-shrink:0}
+.evint-radio-cell{width:38px;display:flex;align-items:center;justify-content:center;border-left:.5px solid var(--bo);height:44px;cursor:pointer;transition:background .1s}
+.evint-radio-cell:hover{background:var(--olp)}
+.evint-radio-cell input[type=radio]{width:14px;height:14px;accent-color:var(--old);cursor:pointer}
+.evint-col-heads{display:flex;background:var(--old);border-bottom:1px solid rgba(255,255,255,.1)}
+.evint-col-lbl{flex:0 0 38px;text-align:center;padding:4px 2px;font-size:8px;color:rgba(255,255,255,.7);letter-spacing:.03em;border-left:.5px solid rgba(255,255,255,.1);line-height:1.2;font-family:var(--mo)}
+.evint-col-lbl:first-child{border-left:none}
+.evint-nota{font-family:var(--mo);font-size:11px;font-weight:600;color:var(--old)}
+
+/* RESOLUCIONES */
+.ri{background:#fff;border:1px solid var(--bo);border-radius:var(--r);padding:11px 12px;margin-bottom:7px;display:flex;align-items:flex-start;gap:9px;flex-wrap:wrap}
+.rim{flex:1;min-width:0}
+.rin{font-size:13px;font-weight:700;color:var(--ink)}
+.ris{font-size:11px;color:var(--mu);margin-top:3px;display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.ria{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap}
+
+/* BUTTONS */
+.btn{background:#fff;border:1px solid var(--bo);border-radius:var(--r);padding:7px 12px;font-size:13px;font-family:var(--fn);cursor:pointer;color:var(--ink);transition:all .12s;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{background:var(--olp);border-color:var(--olm)}
+.btn:active{transform:scale(.97)}
+.btn-p{background:var(--old);color:#fff;border-color:var(--old)}
+.btn-p:hover{background:var(--ol)}
+.btn-go{background:var(--go);color:var(--old);border-color:var(--go);font-weight:700}
+.btn-go:hover{background:var(--gl)}
+.btn-da{background:var(--db);color:var(--da);border-color:var(--dc)}
+.btn-sm{padding:5px 9px;font-size:11px}
+.btn-xs{padding:3px 7px;font-size:10px}
+.btn-fw{width:100%;justify-content:center}
+
+/* FORMS */
+.fr{margin-bottom:12px}
+.fr label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mu);margin-bottom:4px}
+.fr input,.fr select,.fr textarea{width:100%;padding:9px 11px;border:1px solid var(--bo);border-radius:var(--r);font-size:14px;font-family:var(--fn);color:var(--ink);background:#fff;-webkit-appearance:none;appearance:none;transition:border-color .12s}
+.fr input:focus,.fr select:focus,.fr textarea:focus{outline:none;border-color:var(--ol);box-shadow:0 0 0 3px rgba(74,82,64,.12)}
+.fr textarea{resize:vertical;min-height:72px;line-height:1.5}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.fg{grid-template-columns:1fr}}
+.fsec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--old);padding:10px 0 7px;border-bottom:1px solid var(--bo);margin-bottom:10px}
+
+/* DRAWER */
+.dbg{display:none;position:fixed;inset:0;background:rgba(10,15,8,.6);z-index:200;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
+.dbg.on{display:flex}
+.dwr{background:#fff;border-radius:18px 18px 0 0;width:100%;max-height:93dvh;overflow-y:auto;padding:0 1rem calc(env(safe-area-inset-bottom) + 1rem);animation:slideUp .22s ease-out}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@media(min-width:600px){.dbg{align-items:center}.dwr{border-radius:var(--rx);max-width:560px;max-height:90vh}.dwr-wide{max-width:740px}}
+.dh{width:38px;height:4px;background:var(--bo);border-radius:2px;margin:11px auto 5px}
+.dtit{font-size:15px;font-weight:700;color:var(--old);padding:10px 0 .9rem;border-bottom:1px solid var(--bo);margin-bottom:.9rem;display:flex;align-items:center;gap:7px}
+.dft{display:flex;justify-content:flex-end;gap:7px;padding-top:.9rem;border-top:1px solid var(--bo);margin-top:.9rem}
+
+/* FAB */
+.fab{position:fixed;bottom:calc(var(--nb) + 10px);right:14px;width:48px;height:48px;border-radius:50%;background:var(--old);color:var(--gl);border:none;font-size:22px;cursor:pointer;z-index:99;box-shadow:0 4px 18px rgba(20,25,15,.3);display:flex;align-items:center;justify-content:center;transition:transform .15s,background .15s}
+.fab:hover{background:var(--ol);transform:scale(1.06)}
+.fab:active{transform:scale(.93)}
+
+/* RESOLUCIÓN PRINT */
+.rp{font-family:'Times New Roman',serif;font-size:12px;line-height:1.7;color:#000;padding:1.25rem;background:#fff;border-radius:var(--r);border:1px solid var(--bo)}
+.rp .rh{text-align:center;border-bottom:2px solid #000;padding-bottom:.7rem;margin-bottom:.7rem}
+.rp .rht{font-size:14px;font-weight:bold;text-transform:uppercase;letter-spacing:.06em}
+.rp .rn{font-weight:bold;text-transform:uppercase;text-align:center;margin-bottom:.7rem}
+.rp .rs{font-weight:bold;text-transform:uppercase;margin-top:10px;margin-bottom:3px}
+.rp .rit{margin-left:1.4rem;margin-bottom:3px}
+.rp .rtx{text-align:justify;margin-left:1.4rem}
+.rp .rfi{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:1.4rem;text-align:center}
+.rp .rfl{border-top:1px solid #000;padding-top:4px;margin-top:1.4rem;font-size:11px}
+.rp .rdi table{width:100%;border-collapse:collapse;margin-top:.7rem}
+.rp .rdi td{padding:3px 6px;border:.5px solid #aaa;font-size:11px}
+
+/* EMPTY */
+.es{text-align:center;padding:2.5rem 1rem;color:var(--mu)}
+.es-i{font-size:38px;margin-bottom:9px;opacity:.3}
+.es-t{font-size:14px;font-weight:700;color:var(--old);margin-bottom:5px}
+.es-s{font-size:12px;line-height:1.5}
+
+/* TOASTS */
+.tw{position:fixed;top:calc(var(--th) + 28px);left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:none}
+.toast{background:var(--old);color:#fff;border-radius:100px;padding:7px 16px;font-size:12px;font-weight:600;box-shadow:0 4px 18px rgba(0,0,0,.2);animation:tin .2s ease-out;white-space:nowrap}
+.toast.ok{background:var(--su)}.toast.err{background:var(--da)}
+@keyframes tin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+
+/* PICKER HV */
+.hvp{background:var(--olp);border-radius:var(--rl);padding:7px;display:flex;flex-direction:column;gap:3px;margin-bottom:9px}
+.hvpi{padding:9px 10px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;gap:9px;transition:background .12s}
+.hvpi:hover,.hvpi.on{background:#fff;box-shadow:var(--sh)}
+
+/* TABS inside section */
+.stabs{display:flex;gap:0;border-bottom:1px solid var(--bo);margin-bottom:12px}
+.stab{background:none;border:none;border-bottom:2px solid transparent;padding:7px 14px;font-size:12px;font-family:var(--fn);font-weight:600;cursor:pointer;color:var(--mu);margin-bottom:-1px;letter-spacing:.03em}
+.stab.on{color:var(--old);border-bottom-color:var(--go)}
+
+/* EVINT TABLE */
+.evint-summary-table{width:100%;border-collapse:collapse;font-size:11px}
+.evint-summary-table th{background:var(--old);color:rgba(255,255,255,.85);padding:6px 8px;text-align:center;font-weight:600;letter-spacing:.03em}
+.evint-summary-table td{padding:6px 8px;border-bottom:1px solid var(--bo);text-align:center}
+.evint-summary-table tr:last-child td{border-bottom:none}
+.evint-summary-table td:first-child{text-align:left;font-weight:600;color:var(--old)}
+
+/* OBSERVACIONES */
+.obs-box{background:var(--gp);border:1px solid #e0d080;border-radius:var(--r);padding:10px 12px;margin-bottom:8px}
+.obs-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--wa);margin-bottom:5px}
+.obs-txt{font-size:12px;color:var(--ink);line-height:1.6;white-space:pre-wrap}
+
+/* NOTIF PENDIENTES */
+.notif-item{padding:10px 12px;border-bottom:1px solid var(--bo);display:flex;align-items:flex-start;gap:9px}
+.notif-item:last-child{border-bottom:none}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--wa);flex-shrink:0;margin-top:4px}
+.notif-info{flex:1;min-width:0}
+.notif-name{font-size:12px;font-weight:700;color:var(--ink)}
+.notif-sub{font-size:11px;color:var(--mu);margin-top:1px}
+.notif-days{font-size:10px;color:var(--da);font-weight:700;flex-shrink:0}
+
+.hide{display:none!important}
+.sep{height:1px;background:var(--bo);margin:10px 0}
+#loading-screen{position:fixed;inset:0;background:#2e3329;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .5s ease}
+#loading-screen.fade{opacity:0;pointer-events:none}
+#loading-screen.gone{display:none}
+.li{width:54px;height:54px;background:#b8960c;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#2e3329;font-family:var(--mo);margin-bottom:18px}
+.lt{color:#fff;font-size:15px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.ls{color:rgba(255,255,255,.5);font-size:11px;letter-spacing:.04em;margin-bottom:26px}
+.lbw{width:160px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden}
+.lbi{height:100%;background:#b8960c;border-radius:2px;animation:lb 1.5s ease-in-out infinite}
+@keyframes lb{0%{width:0%;margin-left:0}50%{width:65%;margin-left:20%}100%{width:0%;margin-left:100%}}
+.lm{color:rgba(255,255,255,.4);font-size:11px;margin-top:12px;letter-spacing:.03em}
+
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;background:#1a1c17;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:8000;padding:1.5rem}
+#login-screen.gone{display:none}
+.login-box{background:#fff;border-radius:20px;padding:2rem 1.5rem;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;justify-content:center}
+.login-icon{width:44px;height:44px;background:#b8960c;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#2e3329;font-family:'IBM Plex Mono',monospace}
+.login-title{font-size:16px;font-weight:700;color:#2e3329;letter-spacing:.05em;text-transform:uppercase}
+.login-sub{font-size:10px;color:#6b7560;letter-spacing:.04em}
+.login-tabs{display:flex;background:#eef0ea;border-radius:10px;padding:3px;margin-bottom:1.25rem;gap:3px}
+.login-tab{flex:1;padding:8px;text-align:center;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;border:none;background:transparent;font-family:'IBM Plex Sans',sans-serif;color:#6b7560;transition:all .15s}
+.login-tab.on{background:#fff;color:#2e3329;box-shadow:0 1px 6px rgba(0,0,0,.1)}
+.login-fr{margin-bottom:12px}
+.login-fr label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6b7560;margin-bottom:4px}
+.login-fr input{width:100%;padding:10px 12px;border:1px solid #d4d8ce;border-radius:8px;font-size:14px;font-family:'IBM Plex Sans',sans-serif;color:#1a1c17;-webkit-appearance:none}
+.login-fr input:focus{outline:none;border-color:#4a5240;box-shadow:0 0 0 3px rgba(74,82,64,.12)}
+.btn-login-main{width:100%;padding:12px;background:#2e3329;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;margin-bottom:10px;transition:background .15s}
+.btn-login-main:hover{background:#4a5240}
+.btn-login-google{width:100%;padding:11px;background:#fff;color:#1a1c17;border:1px solid #d4d8ce;border-radius:10px;font-size:13px;font-weight:600;font-family:'IBM Plex Sans',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .15s}
+.btn-login-google:hover{background:#f5f5f5}
+.login-divider{display:flex;align-items:center;gap:10px;margin:10px 0;font-size:11px;color:#6b7560}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:#d4d8ce}
+.login-error{background:#fdf0f0;color:#8b2020;border:1px solid #f0c0c0;border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:10px;display:none}
+.login-footer{text-align:center;font-size:11px;color:#6b7560;margin-top:12px}
+.login-footer a{color:#4a5240;font-weight:600;cursor:pointer;text-decoration:none}
+
+/* ── USER BAR ── */
+.user-bar{display:flex;align-items:center;gap:6px}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;overflow:hidden;flex-shrink:0}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:11px;color:rgba(255,255,255,.8);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-logout{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);border-radius:5px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif}
+.btn-logout:hover{background:rgba(255,255,255,.2)}
+</style>
+</head>
+<body>
+<div id="loading-screen">
+  <div class="li">HV</div>
+  <div class="lt">Hojas de Vida</div>
+  <div class="ls">Ejército de Chile</div>
+  <div class="lbw"><div class="lbi"></div></div>
+  <div class="lm" id="lm">Conectando...</div>
+</div>
+<!-- PANTALLA DE LOGIN -->
+<div id="login-screen" class="gone">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-icon">HV</div>
+      <div>
+        <div class="login-title">Hojas de Vida</div>
+        <div class="login-sub">Ejército de Chile</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="login-tabs">
+      <button class="login-tab on" onclick="loginTab('ingresar',this)">Ingresar</button>
+      <button class="login-tab" onclick="loginTab('registrar',this)">Registrarse</button>
+    </div>
+
+    <!-- Error -->
+    <div class="login-error" id="login-error"></div>
+
+    <!-- Formulario ingresar -->
+    <div id="lt-ingresar">
+      <div class="login-fr"><label>Correo electrónico</label>
+        <input type="email" id="li-email" placeholder="correo@gmail.com" autocomplete="email"></div>
+      <div class="login-fr"><label>Contraseña</label>
+        <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')loginEmail()"></div>
+      <button class="btn-login-main" onclick="loginEmail()">Ingresar</button>
+      <div class="login-divider">o continúa con</div>
+      <button class="btn-login-google" onclick="loginGoogle()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Ingresar con Google
+      </button>
+      <div class="login-footer">¿No tienes cuenta? <a onclick="loginTab('registrar',document.querySelectorAll('.login-tab')[1])">Regístrate aquí</a></div>
+    </div>
+
+    <!-- Formulario registrar -->
+    <div id="lt-registrar" style="display:none">
+      <div class="login-fr"><label>Nombre completo</label>
+        <input type="text" id="lr-nombre" placeholder="APELLIDO APELLIDO Nombre"></div>
+      <div class="login-fr"><label>Correo electrónico</label>
+        <input type="email" id="lr-email" placeholder="correo@gmail.com" autocomplete="email"></div>
+      <div class="login-fr"><label>Contraseña (mínimo 6 caracteres)</label>
+        <input type="password" id="lr-pass" placeholder="••••••••" autocomplete="new-password"></div>
+      <div class="login-fr"><label>Confirmar contraseña</label>
+        <input type="password" id="lr-pass2" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter')registrarEmail()"></div>
+      <button class="btn-login-main" onclick="registrarEmail()">Crear cuenta</button>
+      <div class="login-divider">o continúa con</div>
+      <button class="btn-login-google" onclick="loginGoogle()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Registrarse con Google
+      </button>
+      <div class="login-footer">¿Ya tienes cuenta? <a onclick="loginTab('ingresar',document.querySelectorAll('.login-tab')[0])">Ingresa aquí</a></div>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">HV</div>
+    <div>
+      <div class="brand-name">Hojas de Vida</div>
+      <div class="brand-sub" id="lbl-unidad">Sin configurar</div>
+    </div>
+  </div>
+  <div class="top-acts">
+    <button class="btn-save-top" onclick="guardarManual()" title="Guardar cambios">💾 Guardar</button>
+    <button class="icon-btn" onclick="openD('d-config')" title="Configuración">⚙</button>
+    <button class="btn-add-top" onclick="openD('d-persona')">+ Personal</button>
+    <div class="user-bar" id="user-bar" style="display:none">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <span class="user-name" id="user-name"></span>
+      <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
+    </div>
+  </div>
+</div>
+
+<!-- SYNC STRIP -->
+<div class="sync-strip">
+  <div class="sync-dot" id="sync-dot"></div>
+  <span id="sync-lbl">Listo</span>
+</div>
+
+<!-- SCROLL -->
+<div class="scroll" id="scroll">
+
+<!-- INICIO -->
+<div id="s-inicio" class="sec on">
+  <div class="metrics">
+    <div class="met"><div class="met-v" id="mt-0">0</div><div class="met-l">Dotación</div></div>
+    <div class="met"><div class="met-v" id="mt-1" style="color:var(--su)">0</div><div class="met-l">Méritos</div></div>
+    <div class="met"><div class="met-v" id="mt-2" style="color:var(--da)">0</div><div class="met-l">Deméritos</div></div>
+    <div class="met"><div class="met-v" id="mt-3" style="color:var(--wa)">0</div><div class="met-l">Sin notif.</div></div>
+  </div>
+  <div id="alertas-plazos"></div>
+  <div id="alertas-notif"></div>
+  <div class="card">
+    <div class="ch"><span class="cht">Dotación</span>
+      <button class="btn btn-sm btn-p" onclick="openD('d-persona')">+ Agregar</button></div>
+    <div id="lista-personal"></div>
+  </div>
+  <div id="alertas-inicio"></div>
+</div>
+
+<!-- HOJA DE VIDA -->
+<div id="s-hv" class="sec">
+  <div id="hv-picker"></div>
+  <div id="hv-cont"></div>
+</div>
+
+<!-- PUNTAJES -->
+<div id="s-puntajes" class="sec">
+  <div id="cont-puntajes"></div>
+</div>
+
+<!-- DÍAS ADMIN -->
+<div id="s-dias" class="sec">
+  <div class="stabs">
+    <button class="stab on" onclick="stab('dias-tab','st-dias',this)">📅 Días Admin.</button>
+    <button class="stab" onclick="stab('dias-tab','st-licencias',this)">🏥 Licencias Médicas</button>
+  </div>
+  <div id="st-dias"><div id="cont-dias"></div></div>
+  <div id="st-licencias" style="display:none"><div id="cont-licencias"></div></div>
+</div>
+
+<!-- EVINT -->
+<div id="s-evint" class="sec">
+  <div id="cont-evint"></div>
+</div>
+
+<!-- RESOLUCIONES -->
+<div id="s-res" class="sec">
+  <div class="abox info" style="margin-bottom:9px">Toca "Ver Res." en cualquier mérito o demérito para generar la resolución exenta en formato reglamentario.</div>
+  <div id="cont-res"></div>
+</div>
+
+</div><!-- /scroll -->
+
+<!-- BOTTOM NAV -->
+<div class="bnav">
+  <button class="ni on" onclick="tab('s-inicio',this)">
+    <span class="nic">⌂</span><span class="nil">Inicio</span>
+  </button>
+  <button class="ni" onclick="tab('s-hv',this)">
+    <span class="nic">☰</span><span class="nil">HV</span>
+  </button>
+  <button class="ni" onclick="tab('s-puntajes',this)">
+    <span class="nic">◎</span><span class="nil">Puntajes</span>
+  </button>
+  <button class="ni" onclick="tab('s-dias',this)">
+    <span class="nic">📅</span><span class="nil">Días</span>
+  </button>
+  <button class="ni" onclick="tab('s-evint',this)">
+    <span class="nic">📋</span><span class="nil">EVINT</span>
+  </button>
+  <button class="ni" onclick="tab('s-res',this)">
+    <span class="nic">✦</span><span class="nil">Resoluc.</span>
+    <span class="nbadge hide" id="badge-res">0</span>
+  </button>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openD('d-fab')">+</button>
+
+</div><!-- /app -->
+
+<div class="tw" id="tw"></div>
+
+<!-- ══════════ DRAWERS ══════════ -->
+
+<!-- FAB MENU -->
+<div id="d-fab" class="dbg"><div class="dwr" style="max-width:380px">
+  <div class="dh"></div>
+  <div class="dtit">Nueva anotación</div>
+  <div style="display:flex;flex-direction:column;gap:7px">
+    <button class="btn btn-fw" style="background:var(--sb);color:var(--su);border-color:var(--sc);padding:13px;font-size:13px" onclick="closeD('d-fab');openAnot('merito')">✓ &nbsp;Mérito (+)</button>
+    <button class="btn btn-fw" style="background:var(--db);color:var(--da);border-color:var(--dc);padding:13px;font-size:13px" onclick="closeD('d-fab');openAnot('demerito')">✕ &nbsp;Demérito (−)</button>
+    <button class="btn btn-fw" style="background:var(--ib);color:var(--ia);border-color:var(--ic);padding:13px;font-size:13px" onclick="closeD('d-fab');openAnot('constancia')">≡ &nbsp;Constancia administrativa</button>
+    <button class="btn btn-fw" style="background:var(--gp);color:var(--wa);border-color:var(--wc);padding:13px;font-size:13px" onclick="closeD('d-fab');openDiasAnot()">📅 &nbsp;Registro días administrativos</button>
+    <button class="btn btn-fw" style="background:var(--db);color:var(--da);border-color:var(--dc);padding:13px;font-size:13px" onclick="closeD('d-fab');openLicAnot()">🏥 &nbsp;Registro licencia médica</button>
+  </div>
+  <div class="dft"><button class="btn" onclick="closeD('d-fab')">Cancelar</button></div>
+</div></div>
+
+<!-- CONFIG -->
+<div id="d-config" class="dbg"><div class="dwr">
+  <div class="dh"></div>
+  <div class="dtit">⚙ Configuración de unidad</div>
+  <div class="fg">
+    <div class="fr"><label>Tu grado</label><input id="cfg-grado" placeholder="CAP" oninput="this.value=this.value.toUpperCase()"></div>
+    <div class="fr"><label>Tu nombre completo</label><input id="cfg-nombre" placeholder="APELLIDO APELLIDO Nombre"></div>
+  </div>
+  <div class="fg">
+    <div class="fr"><label>Unidad / Repartición</label><input id="cfg-unidad" placeholder="2da Cía. Ingenieros"></div>
+    <div class="fr"><label>Abreviatura unidad</label><input id="cfg-abrev" placeholder="2DA COMP. ING MOT"></div>
+  </div>
+  <div class="fg">
+    <div class="fr"><label>N° base resoluciones</label><input id="cfg-nres" placeholder="1530"></div>
+    <div class="fr"><label>Correlativo actual</label><input id="cfg-corr" type="number" placeholder="1" min="1"></div>
+  </div>
+  <div class="fg">
+    <div class="fr"><label>Nombre Jefe Plana Mayor</label><input id="cfg-jpm" placeholder="APELLIDO APELLIDO Nombre"></div>
+    <div class="fr"><label>Cargo JPM</label><input id="cfg-jpmcargo" placeholder="Jefe PM Subrogante"></div>
+  </div>
+  <div class="fg">
+    <div class="fr"><label>Inicio período</label><input type="date" id="cfg-ini"></div>
+    <div class="fr"><label>Término período</label><input type="date" id="cfg-fin"></div>
+  </div>
+  <div class="fg">
+    <div class="fr"><label>Días admin. anuales</label><input id="cfg-dias" type="number" placeholder="6" min="1" max="60"></div>
+    <div class="fr"><label>Fecha EVINT N°1</label><input type="date" id="cfg-evint1"></div>
+  </div>
+  <div class="fg">
+    <div class="fr"><label>Fecha EVINT N°2</label><input type="date" id="cfg-evint2"></div>
+    <div class="fr"><label>Días alerta EVINT (anticipación)</label><input id="cfg-alerta-dias" type="number" placeholder="15" min="1"></div>
+  </div>
+  <div class="fsec">Respaldo de datos</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn btn-sm btn-p" onclick="exportarDatos()">⬇ Exportar JSON</button>
+    <button class="btn btn-sm" onclick="document.getElementById('import-file').click()">⬆ Importar JSON</button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importarDatos(event)">
+  </div>
+  <div class="dft">
+    <button class="btn" onclick="closeD('d-config')">Cancelar</button>
+    <button class="btn btn-p" onclick="guardarConfig()">Guardar</button>
+  </div>
+</div></div>
+
+<!-- PERSONA -->
+<div id="d-persona" class="dbg"><div class="dwr">
+  <div class="dh"></div>
+  <div class="dtit" id="d-pers-tit">🪖 Registrar integrante</div>
+  <div class="fg">
+    <div class="fr"><label>Grado *</label>
+      <select id="p-grado">
+        <option value="SOM">SOM — Suboficial Mayor</option>
+        <option value="SOF">SOF — Suboficial</option>
+        <option value="SG1">SG1 — Sargento 1°</option>
+        <option value="SG2" selected>SG2 — Sargento 2°</option>
+        <option value="CB1">CB1 — Cabo 1°</option>
+        <option value="CB2">CB2 — Cabo 2°</option>
+        <option value="CBO">CBO — Cabo</option>
+      </select></div>
+    <div class="fr"><label>Escalafón *</label>
+      <select id="p-escal">
+        <option>INF</option><option>ART</option><option>CAB</option><option selected>ING</option>
+        <option>COM</option><option>LOG</option><option>SAN</option><option>INT</option><option>AVN</option>
+      </select></div>
+  </div>
+  <div class="fg">
+    <div class="fr"><label>Apellidos * (MAYÚSCULAS)</label><input id="p-apell" placeholder="APELLIDO APELLIDO" oninput="this.value=this.value.toUpperCase()"></div>
+    <div class="fr"><label>Nombres *</label><input id="p-nomb" placeholder="Nombre Nombre"></div>
+  </div>
+  <div class="fg">
+    <div class="fr"><label>RUN</label><input id="p-run" placeholder="12.345.678-9"></div>
+    <div class="fr"><label>Categoría *</label>
+      <select id="p-cat" onchange="updCatInfo()">
+        <option value="som">Suboficial Mayor (4 conc.)</option>
+        <option value="sof" selected>Suboficial (9 conc.)</option>
+        <option value="clase">Clase (8 conc.)</option>
+      </select></div>
+  </div>
+  <div class="fg">
+    <div class="fr"><label>Cargo / Función</label><input id="p-cargo" placeholder="Jefe Sección Nº1"></div>
+    <div class="fr"><label>Años en el grado</label><input id="p-ang" type="number" placeholder="0" min="0"></div>
+  </div>
+  <div class="fr"><label>Observaciones generales</label>
+    <textarea id="p-obs" placeholder="Antecedentes relevantes del integrante que debes tener presente al calificar..." style="min-height:65px"></textarea></div>
+  <div id="cat-info" class="abox info" style="font-size:11px;margin-bottom:0"></div>
+  <div id="p-delete-row" style="display:none;margin-top:8px">
+    <button class="btn btn-da btn-fw" onclick="eliminarPersona()">🗑 Eliminar integrante y todos sus datos</button>
+  </div>
+  <div class="dft">
+    <button class="btn" onclick="closeD('d-persona');editPI=-1">Cancelar</button>
+    <button class="btn btn-p" onclick="guardarPersona()">Guardar</button>
+  </div>
+</div></div>
+
+<!-- ANOTACIÓN -->
+<div id="d-anot" class="dbg"><div class="dwr">
+  <div class="dh"></div>
+  <div class="dtit" id="d-anot-tit">Nueva anotación</div>
+  <div class="fr"><label>Integrante *</label><select id="a-pers" onchange="filtrarConc()"></select></div>
+  <div class="fg">
+    <div class="fr"><label>Tipo *</label>
+      <select id="a-tipo" onchange="cambioTipoAnot()">
+        <option value="merito">Mérito (+)</option>
+        <option value="demerito">Demérito (−)</option>
+        <option value="constancia">Constancia administrativa</option>
+      </select></div>
+    <div class="fr"><label>Fecha *</label><input type="date" id="a-fecha"></div>
+  </div>
+  <!-- MD -->
+  <div id="blq-md">
+    <div class="fg">
+      <div class="fr"><label>Concepto *</label>
+        <select id="a-conc">
+          <option value="1">N°1 Cumplimiento del deber</option>
+          <option value="2">N°2 Criterio y discreción</option>
+          <option value="3">N°3 Sociabilidad y cohesión</option>
+          <option value="4">N°4 Compromiso institucional</option>
+          <option value="5">N°5 Mando</option>
+          <option value="6">N°6 Asesoría</option>
+          <option value="7">N°7 Educación e instrucción</option>
+          <option value="8">N°8 Administración</option>
+          <option value="9">N°9 Preparación profesional</option>
+        </select></div>
+      <div class="fr"><label>Puntaje *</label>
+        <select id="a-punt">
+          <option value="+0.50">+0,50 pts</option>
+          <option value="+1.00">+1,00 pt (distinción)</option>
+        </select></div>
+    </div>
+    <div class="fr"><label>Descripción del hecho *</label>
+      <textarea id="a-desc" placeholder="Qué se hizo, cómo, cuándo, dónde. Sin adjetivaciones..."></textarea></div>
+    <div class="fr"><label>Antecedente que motiva (oficio / orden)</label>
+      <input id="a-antec" placeholder="Ej: OF ESCING S-3 (R) N° 3750/105 de 23MAY2025"></div>
+    <div class="fr"><label>N° Resolución exenta (vacío = automático)</label>
+      <input id="a-resol" placeholder="Se asignará automáticamente"></div>
+  </div>
+  <!-- CONSTANCIA -->
+  <div id="blq-const" style="display:none">
+    <div class="fr"><label>Tipo de constancia *</label>
+      <select id="a-tconst" onchange="cambioConst()">
+        <optgroup label="Licencias médicas">
+          <option value="lic_total">Licencia médica — reposo total</option>
+          <option value="lic_parcial">Licencia médica — reposo parcial</option>
+          <option value="lic_prenatal">Licencia médica — pre/postnatal</option>
+          <option value="lic_hijo">Licencia — enf. grave hijo menor 1 año</option>
+        </optgroup>
+        <optgroup label="Comisiones">
+          <option value="com_nac">Comisión de servicio nacional (&lt;3 meses)</option>
+          <option value="com_ext">Comisión de servicio extranjero</option>
+        </optgroup>
+        <optgroup label="Feriados y permisos">
+          <option value="feriado">Feriado legal</option>
+          <option value="permiso_psr">Permiso sin goce de remuneraciones</option>
+        </optgroup>
+        <optgroup label="Calificaciones y EVINT">
+          <option value="evint">Constancia de EVINT</option>
+          <option value="evint_no_real">Constancia de no realización de 1RA/2DA EVINT</option>
+          <option value="cierre">Cierre período calificaciones</option>
+          <option value="revision">Revisión</option>
+        </optgroup>
+        <optgroup label="ISA y CSS">
+          <option value="isa_inicio">Inicio ISA / proceso judicial</option>
+          <option value="isa_termino">Término ISA / proceso judicial</option>
+          <option value="isa_resultado">Constancia de resultado de ISA</option>
+          <option value="css_citacion">Constancia de citación a la CSS o CSE</option>
+          <option value="css_no_asist">Constancia de no asistencia a la CSS o CSE</option>
+          <option value="css_nutricion">Derivación a la CSS por condición nutricional</option>
+        </optgroup>
+        <optgroup label="Junta de Selección">
+          <option value="junta_seleccion">Resultado Junta de Selección</option>
+        </optgroup>
+        <optgroup label="Armas">
+          <option value="prohib_arma">Prohibición uso arma de fuego</option>
+          <option value="autor_arma">Autorización uso arma de fuego</option>
+        </optgroup>
+        <optgroup label="Notificaciones">
+          <option value="neg_firma">Acta de negación a firma</option>
+          <option value="sin_firma_calif">Constancia de anotaciones sin firma del calificado</option>
+          <option value="notif_carta">Constancia de notificación por carta certificada (Art. 84 DFL N°1)</option>
+          <option value="acta_notif">Constancia y registro de acta de notificación</option>
+        </optgroup>
+        <optgroup label="Movimientos de personal">
+          <option value="cambio_calif">Cambio de calificador directo</option>
+          <option value="despacho">Despacho por destinación</option>
+          <option value="ingreso">Ingreso / Nombramiento</option>
+          <option value="retiro">Retiro o baja</option>
+          <option value="despliegue">Constancia de despliegue</option>
+          <option value="art77">Artículo 77</option>
+        </optgroup>
+        <optgroup label="Educación">
+          <option value="reprobacion">Constancia de reprobación de curso</option>
+          <option value="correccion">Constancia de corrección</option>
+        </optgroup>
+        <optgroup label="Otros">
+          <option value="otros_ant">Constancia otros antecedentes</option>
+          <option value="otro">Otra constancia</option>
+        </optgroup>
+      </select></div>
+    <div id="campos-const"></div>
+    <div class="fr"><label>Detalle / Observaciones</label>
+      <textarea id="a-obs" style="min-height:55px" placeholder="Información adicional..."></textarea></div>
+    <div class="fr"><label>Documento que origina</label>
+      <input id="a-docor" placeholder="Ej: OF ESCING S-1 (R) N° 1000/123 de 01ENE2025"></div>
+  </div>
+  <div class="fr"><label>Estado de notificación</label>
+    <select id="a-notif">
+      <option value="pendiente">Pendiente de notificar</option>
+      <option value="conforme">Notificado — declaró conforme</option>
+      <option value="reconsiderado">Notificado — presentó reconsideración</option>
+      <option value="negado">Se negó a firmar (levantar Acta)</option>
+    </select></div>
+  <div id="anot-del" style="display:none;margin-top:6px">
+    <button class="btn btn-da btn-fw" onclick="eliminarAnot()">🗑 Eliminar anotación</button>
+  </div>
+  <div class="dft">
+    <button class="btn" onclick="closeD('d-anot')">Cancelar</button>
+    <button class="btn btn-p" id="btn-ga" onclick="guardarAnot()">Registrar en HV</button>
+  </div>
+</div></div>
+
+<!-- DÍAS ADMIN -->
+<div id="d-dias" class="dbg"><div class="dwr">
+  <div class="dh"></div>
+  <div class="dtit" id="d-dias-tit">📅 Días administrativos</div>
+  <div class="fr"><label>Integrante *</label><select id="dia-pers"></select></div>
+  <div class="fg">
+    <div class="fr"><label>Tipo *</label>
+      <select id="dia-tipo">
+        <option value="feriado">Feriado legal</option>
+        <option value="permiso">Permiso administrativo</option>
+        <option value="permiso_psr">Permiso sin goce de remuneraciones</option>
+        <option value="comp_horas">Compensación horas</option>
+        <option value="asunto_particular">Asunto particular</option>
+        <option value="enfermedad">Enfermedad (sin licencia)</option>
+        <option value="otro">Otro</option>
+      </select></div>
+    <div class="fr"><label>Fecha *</label><input type="date" id="dia-fecha"></div>
+  </div>
+  <div class="fg">
+    <div class="fr"><label>Días utilizados *</label><input id="dia-dias" type="number" min="0.5" step="0.5" placeholder="1"></div>
+    <div class="fr"><label>Autorizado por</label><input id="dia-autor" placeholder="Ej: CAP BARRIA"></div>
+  </div>
+  <div class="fr"><label>Documento / N° orden</label><input id="dia-doc" placeholder="Ej: OF S-1 N° 1000/001"></div>
+  <div class="fr"><label>Observaciones</label><textarea id="dia-obs" style="min-height:50px" placeholder="Detalles adicionales..."></textarea></div>
+  <div id="dia-del" style="display:none;margin-top:6px">
+    <button class="btn btn-da btn-fw" onclick="eliminarDia()">🗑 Eliminar registro</button>
+  </div>
+  <div class="dft">
+    <button class="btn" onclick="closeD('d-dias')">Cancelar</button>
+    <button class="btn btn-p" id="btn-gd" onclick="guardarDia()">Guardar</button>
+  </div>
+</div></div>
+
+<!-- LICENCIA MÉDICA -->
+<div id="d-lic" class="dbg"><div class="dwr">
+  <div class="dh"></div>
+  <div class="dtit" id="d-lic-tit">🏥 Registro de licencia médica</div>
+  <div class="fr"><label>Integrante *</label><select id="lic-pers"></select></div>
+  <div class="fr"><label>Tipo de licencia *</label>
+    <select id="lic-tipo">
+      <option value="lic_total">Reposo total</option>
+      <option value="lic_parcial">Reposo parcial</option>
+      <option value="lic_prenatal">Pre/postnatal</option>
+      <option value="lic_hijo">Enfermedad grave hijo menor 1 año</option>
+    </select></div>
+  <div class="fg">
+    <div class="fr"><label>Fecha inicio *</label><input type="date" id="lic-fi"></div>
+    <div class="fr"><label>Fecha término *</label><input type="date" id="lic-ft"></div>
+  </div>
+  <div class="fg">
+    <div class="fr"><label>Días totales *</label><input id="lic-dias" type="number" min="1" placeholder="0"></div>
+    <div class="fr"><label>N° licencia / resolución</label><input id="lic-nro" placeholder="Ej: N° 1000/658"></div>
+  </div>
+  <div class="fr"><label>Médico / Centro de salud</label><input id="lic-medico" placeholder="Ej: Hospital Militar"></div>
+  <div class="fr"><label>Diagnóstico (opcional)</label><input id="lic-diag" placeholder="Si es relevante para la calificación..."></div>
+  <div id="lic-del" style="display:none;margin-top:6px">
+    <button class="btn btn-da btn-fw" onclick="eliminarLic()">🗑 Eliminar licencia</button>
+  </div>
+  <div class="dft">
+    <button class="btn" onclick="closeD('d-lic')">Cancelar</button>
+    <button class="btn btn-p" id="btn-gl" onclick="guardarLic()">Guardar</button>
+  </div>
+</div></div>
+
+<!-- EVINT FORM -->
+<div id="d-evint" class="dbg"><div class="dwr dwr-wide">
+  <div class="dh"></div>
+  <div class="dtit" id="d-evint-tit">📋 EVINT</div>
+  <div class="fr"><label>Integrante *</label><select id="ev-pers" onchange="cambioEvintPers()"></select></div>
+  <div class="fg">
+    <div class="fr"><label>N° de EVINT</label>
+      <select id="ev-num">
+        <option value="1">EVINT N°1 (octubre)</option>
+        <option value="2">EVINT N°2 (abril)</option>
+      </select></div>
+    <div class="fr"><label>Fecha de aplicación *</label><input type="date" id="ev-fecha"></div>
+  </div>
+  <div class="fr"><label>¿Realiza EVINT?</label>
+    <select id="ev-realiza">
+      <option value="si">Sí realiza</option>
+      <option value="no">No realiza</option>
+    </select></div>
+  <div id="ev-form-body">
+    <!-- Se genera dinámicamente -->
+  </div>
+  <div id="ev-del" style="display:none;margin-top:8px">
+    <button class="btn btn-da btn-fw" onclick="eliminarEvint()">🗑 Eliminar esta EVINT</button>
+  </div>
+  <div class="dft">
+    <button class="btn" onclick="closeD('d-evint')">Cancelar</button>
+    <button class="btn btn-p" onclick="guardarEvint()">Guardar EVINT</button>
+  </div>
+</div></div>
+
+<!-- RESOLUCIÓN PREVIEW -->
+<div id="d-res-prev" class="dbg"><div class="dwr dwr-wide">
+  <div class="dh"></div>
+  <div class="dtit">Resolución exenta — Vista previa</div>
+  <div id="res-preview"></div>
+  <div class="dft">
+    <button class="btn" onclick="closeD('d-res-prev')">Cerrar</button>
+    <button class="btn btn-go" onclick="imprimirRes()">🖨 Imprimir / PDF</button>
+  </div>
+</div></div>
+
+<script>
+// ══════════════════════════════════════════
+// CONSTANTES
+// ══════════════════════════════════════════
+const CNOMS={"1":"Cumplimiento del deber","2":"Criterio y discreción","3":"Sociabilidad y cohesión","4":"Compromiso institucional","5":"Mando","6":"Asesoría","7":"Educación e instrucción","8":"Administración","9":"Preparación profesional"};
+const CATS={som:{label:"Suboficial Mayor",concs:["1","2","3","6"]},sof:{label:"Suboficial",concs:["1","2","3","4","5","6","7","8","9"]},clase:{label:"Clase",concs:["1","2","3","4","5","7","8","9"]}};
+const TCONST={lic_total:"LICENCIA MÉDICA (REPOSO TOTAL)",lic_parcial:"LICENCIA MÉDICA (REPOSO PARCIAL)",lic_prenatal:"LICENCIA MÉDICA (PRE/POSTNATAL)",lic_hijo:"LICENCIA MÉDICA (ENF. GRAVE HIJO <1 AÑO)",com_nac:"COMISIÓN DE SERVICIO NACIONAL",com_ext:"COMISIÓN DE SERVICIO EXTRANJERO",feriado:"FERIADO LEGAL",permiso_psr:"PERMISO SIN GOCE DE REMUNERACIONES",evint:"CONSTANCIA DE EVINT",evint_no_real:"CONSTANCIA DE NO REALIZACIÓN DE 1RA/2DA EVINT",cierre:"CIERRE PERÍODO CALIFICACIONES",revision:"REVISIÓN",isa_inicio:"INICIO ISA / PROCESO JUDICIAL",isa_termino:"TÉRMINO ISA / PROCESO JUDICIAL",isa_resultado:"CONSTANCIA DE RESULTADO DE ISA",css_citacion:"CONSTANCIA DE CITACIÓN A LA CSS O CSE",css_no_asist:"CONSTANCIA DE NO ASISTENCIA A LA CSS O CSE",css_nutricion:"DERIVACIÓN A LA CSS POR CONDICIÓN NUTRICIONAL",junta_seleccion:"RESULTADO JUNTA DE SELECCIÓN",prohib_arma:"PROHIBICIÓN USO ARMA DE FUEGO",autor_arma:"AUTORIZACIÓN USO ARMA DE FUEGO",neg_firma:"ACTA DE NEGACIÓN A FIRMA",sin_firma_calif:"CONSTANCIA DE ANOTACIONES SIN FIRMA DEL CALIFICADO",notif_carta:"CONSTANCIA DE NOTIFICACIÓN POR CARTA CERTIFICADA (ART. 84 DFL N°1)",acta_notif:"CONSTANCIA Y REGISTRO DE ACTA DE NOTIFICACIÓN",cambio_calif:"CAMBIO DE CALIFICADOR DIRECTO",despacho:"DESPACHO POR DESTINACIÓN",ingreso:"INGRESO / NOMBRAMIENTO",retiro:"RETIRO O BAJA",despliegue:"CONSTANCIA DE DESPLIEGUE",art77:"ARTÍCULO 77",reprobacion:"CONSTANCIA DE REPROBACIÓN DE CURSO",correccion:"CONSTANCIA DE CORRECCIÓN",otros_ant:"CONSTANCIA OTROS ANTECEDENTES",otro:"OTRA CONSTANCIA"};
+const PTXT={"+0.50":"(+) 0,50 (Más cero cincuenta puntos)","+1.00":"(+) 1,00 (Más un punto)","-0.50":"(-) 0,50 (Menos cero cincuenta puntos)","-1.00":"(-) 1,00 (Menos un punto)","-1.50":"(-) 1,50 (Menos uno cincuenta puntos)","-2.00":"(-) 2,00 (Menos dos puntos)","-2.50":"(-) 2,50 (Menos dos cincuenta puntos)","-3.00":"(-) 3,00 (Menos tres puntos)","-3.50":"(-) 3,50 (Menos tres cincuenta puntos)","-4.00":"(-) 4,00 (Menos cuatro puntos)","-4.50":"(-) 4,50 (Menos cuatro cincuenta puntos)","-5.00":"(-) 5,00 (Menos cinco puntos)"};
+const DTIPO={feriado:{label:"Feriado legal",icon:"🏖",color:"#f0faf2",tc:"#1a5c2a"},permiso:{label:"Permiso administrativo",icon:"📋",color:"#eef4fb",tc:"#1a3a5c"},permiso_psr:{label:"Permiso sin goce",icon:"⏸",color:"#fdf6e3",tc:"#7a5000"},comp_horas:{label:"Compensación horas",icon:"🔄",color:"#eef0ea",tc:"#4a5240"},asunto_particular:{label:"Asunto particular",icon:"👤",color:"#eef4fb",tc:"#1a3a5c"},enfermedad:{label:"Enfermedad",icon:"🏥",color:"#fdf0f0",tc:"#8b2020"},otro:{label:"Otro",icon:"📌",color:"#eef0ea",tc:"#4a5240"}};
+const LTIPO={lic_total:"Reposo total",lic_parcial:"Reposo parcial",lic_prenatal:"Pre/postnatal",lic_hijo:"Enf. grave hijo <1 año"};
+const FREQ_KEYS=["siempre","casi_siempre","regularmente","ocasionalmente","casi_nunca","no_observado"];
+const FREQ_VALS={siempre:7,casi_siempre:6.25,regularmente:5.5,ocasionalmente:4,casi_nunca:2.5,no_observado:null};
+const FREQ_SHORT=["Siem.","C.Siem.","Reg.","Ocas.","C.Nca.","No Obs."];
+
+// DESCRIPTORES
+const EVINT_CLASE=[
+  {conc:"1",num:1,texto:"Actúa con voluntad, firmeza y determinación para cumplir y hacer cumplir el deber."},
+  {conc:"1",num:2,texto:"Cumple las órdenes impartidas, conforme a las leyes y reglamentos vigentes."},
+  {conc:"1",num:3,texto:"Demuestra autodisciplina en el cumplimiento de órdenes y normas institucionales."},
+  {conc:"2",num:4,texto:"Actúa con previsión y moderación en las funciones inherentes a su cargo."},
+  {conc:"2",num:5,texto:"Actúa con reserva respecto a temas personales o profesionales."},
+  {conc:"2",num:6,texto:"Dice lo acertado en el momento preciso sin ofender a quienes se dirige."},
+  {conc:"2",num:7,texto:"Resuelve con acierto las situaciones del servicio."},
+  {conc:"3",num:8,texto:"Demuestra disposición para cooperar y aportar más allá de sus obligaciones."},
+  {conc:"3",num:9,texto:"Interactúa de manera afable y formal con personas de diferentes rangos, instituciones y la civilidad."},
+  {conc:"3",num:10,texto:"Promueve la camaradería y coopera a la cohesión de la unidad."},
+  {conc:"4",num:11,texto:"Subordina los propios intereses al cumplimiento del deber."},
+  {conc:"4",num:12,texto:"Responde por las consecuencias de sus acciones y resoluciones."},
+  {conc:"4",num:13,texto:"Demuestra una actitud firme y constante en el cumplimiento de las tareas y obligaciones."},
+  {conc:"4",num:14,texto:"Actúa proactivamente, proponiendo y ejecutando nuevos cursos de acción para mejorar el resultado de las tareas."},
+  {conc:"5",num:15,texto:"Resuelve oportunamente los asuntos de su responsabilidad."},
+  {conc:"5",num:16,texto:"Logra la adhesión y motivación de los subordinados en el cumplimiento de tareas o en situaciones de apremio."},
+  {conc:"5",num:17,texto:"Demuestra una conducta ejemplar ante los subordinados en cualquier circunstancia."},
+  {conc:"7",num:18,texto:"Demuestra capacidad para incentivar la superación personal y profesional de instruidos, subordinados o subalternos."},
+  {conc:"7",num:19,texto:"Demuestra capacidad para lograr cambios en los conocimientos o destrezas de sus instruidos o subalternos."},
+  {conc:"7",num:20,texto:"Demuestra rigurosidad y exigencia en su acción formativa."},
+  {conc:"8",num:21,texto:"Utiliza en forma eficiente y responsable los recursos puestos a su disposición."},
+  {conc:"8",num:22,texto:"Ejecuta y controla las tareas administrativas, dando cumplimiento a los plazos."},
+  {conc:"8",num:23,texto:"Cumple sus obligaciones administrativas con oportunidad y prolijidad."},
+  {conc:"8",num:24,texto:"Desarrolla funciones como secretario de una ISA con rigurosidad y eficiencia."},
+  {conc:"9",num:25,texto:"Demuestra los conocimientos necesarios para su cargo."},
+  {conc:"9",num:26,texto:"Demuestra las habilidades requeridas para su cargo."},
+  {conc:"9",num:27,texto:"Persevera por acrecentar sus conocimientos y destrezas para un mejor desempeño."},
+  {conc:"9",num:28,texto:"Transmite, escucha y expresa positivamente el mensaje, logrando el objetivo deseado."}
+];
+const EVINT_SOF=[
+  {conc:"1",num:1,texto:"Actúa con voluntad, firmeza y determinación para cumplir y hacer cumplir el deber."},
+  {conc:"1",num:2,texto:"Cumple las órdenes impartidas, conforme a las leyes y reglamentos vigentes."},
+  {conc:"1",num:3,texto:"Demuestra autodisciplina en el cumplimiento de órdenes y normas institucionales."},
+  {conc:"2",num:4,texto:"Actúa con previsión y moderación en las funciones inherentes a su cargo."},
+  {conc:"2",num:5,texto:"Actúa con reserva respecto a temas personales o profesionales."},
+  {conc:"2",num:6,texto:"Dice lo acertado en el momento preciso sin ofender a quienes se dirige."},
+  {conc:"2",num:7,texto:"Resuelve con acierto las situaciones del servicio."},
+  {conc:"3",num:8,texto:"Demuestra una actitud de entrega voluntaria en beneficio de la unidad."},
+  {conc:"3",num:9,texto:"Interactúa de manera afable y formal con personas de diferentes rangos, instituciones y la civilidad."},
+  {conc:"3",num:10,texto:"Promueve la camaradería y coopera a la cohesión de la unidad."},
+  {conc:"4",num:11,texto:"Subordina los propios intereses al cumplimiento del deber."},
+  {conc:"4",num:12,texto:"Responde por las consecuencias de sus acciones y resoluciones."},
+  {conc:"4",num:13,texto:"Demuestra una actitud firme y constante en el cumplimiento de las tareas y obligaciones."},
+  {conc:"4",num:14,texto:"Actúa proactivamente, proponiendo y ejecutando nuevos cursos de acción para mejorar el resultado de las tareas."},
+  {conc:"5",num:15,texto:"Resuelve oportunamente los asuntos de su responsabilidad."},
+  {conc:"5",num:16,texto:"Logra la adhesión y motivación de los subordinados en el cumplimiento de tareas o en situaciones de apremio."},
+  {conc:"5",num:17,texto:"Demuestra una conducta ejemplar ante los subordinados en cualquier circunstancia."},
+  {conc:"5",num:18,texto:"Permite ejercer las atribuciones del nivel de mando de sus subordinados para el mejor funcionamiento de la unidad."},
+  {conc:"5",num:19,texto:"Califica a sus subordinados con rigurosidad y criterio aplicando justicia."},
+  {conc:"6",num:20,texto:"Demuestra tener los conocimientos y experiencias para brindar la mejor asesoría al mando."},
+  {conc:"6",num:21,texto:"Analiza y plantea diferentes alternativas de solución, para brindar la mejor asesoría al mando."},
+  {conc:"6",num:22,texto:"Manifiesta su opinión fundamentada para facilitar el proceso de toma de decisiones."},
+  {conc:"7",num:23,texto:"Incentiva la superación personal y profesional de los instruidos, subordinados o subalternos."},
+  {conc:"7",num:24,texto:"Logra cambios en los conocimientos o destrezas de sus instruidos o subalternos."},
+  {conc:"7",num:25,texto:"Demuestra rigurosidad y exigencia en su acción formativa."},
+  {conc:"8",num:26,texto:"Administra en forma eficiente y responsable los recursos puestos a su disposición."},
+  {conc:"8",num:27,texto:"Ejecuta y controla las tareas administrativas, dando cumplimiento a los plazos."},
+  {conc:"8",num:28,texto:"Cumple sus obligaciones administrativas con oportunidad y prolijidad."},
+  {conc:"8",num:29,texto:"Desarrolla funciones como fiscal o secretario de una ISA con rigurosidad y eficiencia."},
+  {conc:"9",num:30,texto:"Demuestra los conocimientos necesarios para su cargo."},
+  {conc:"9",num:31,texto:"Demuestra las habilidades requeridas para su cargo."},
+  {conc:"9",num:32,texto:"Persevera por acrecentar sus conocimientos y destrezas para un mejor desempeño."},
+  {conc:"9",num:33,texto:"Transmite, escucha y expresa positivamente el mensaje, logrando el objetivo deseado."}
+];
+
+// ══════════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════════
+let P=[],A=[],DIAS=[],LICS=[],EVINTS=[],CFG={},corrRes=1;
+let editPI=-1,editAI=null,editDI=null,editLI=null,editEI=null;
+let hvPid=null;
+let saveT=null;
+const SK="hv6";
+
+// ══════════════════════════════════════════
+// FIREBASE CONFIG
+// ══════════════════════════════════════════
+const FB_CONFIG = {
+  apiKey: "AIzaSyAkDDlunfj9QRZFzmuyuqVrr3Xauq4ppa8",
+  authDomain: "app-hojas-de-vida-dc436.firebaseapp.com",
+  databaseURL: "https://app-hojas-de-vida-dc436-default-rtdb.firebaseio.com",
+  projectId: "app-hojas-de-vida-dc436",
+  storageBucket: "app-hojas-de-vida-dc436.firebasestorage.app",
+  messagingSenderId: "859800533482",
+  appId: "1:859800533482:web:ebc99b0fec3a366a9b5a93"
+};
+
+let fbApp=null, fbDB=null, fbRef=null, fbAuth=null;
+let fbInicializado=false;
+let currentUser=null;
+
+function initFirebase(){
+  try{
+    if(typeof firebase==='undefined')throw new Error('Firebase no disponible');
+    if(!firebase.apps.length) fbApp=firebase.initializeApp(FB_CONFIG);
+    else fbApp=firebase.apps[0];
+    fbDB=firebase.database();
+    fbAuth=firebase.auth();
+    // Configurar idioma español para emails de Firebase
+    fbAuth.languageCode='es';
+    return true;
+  }catch(e){
+    console.warn('Firebase no disponible:',e);
+    return false;
+  }
+}
+
+// ── AUTH FUNCTIONS ──
+function loginTab(tab, btn){
+  document.querySelectorAll('.login-tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('lt-ingresar').style.display=tab==='ingresar'?'block':'none';
+  document.getElementById('lt-registrar').style.display=tab==='registrar'?'block':'none';
+  ocultarLoginError();
+}
+
+function mostrarLoginError(msg){
+  const el=document.getElementById('login-error');
+  el.textContent=msg;el.style.display='block';
+}
+function ocultarLoginError(){
+  const el=document.getElementById('login-error');
+  el.style.display='none';el.textContent='';
+}
+
+async function loginEmail(){
+  const email=document.getElementById('li-email').value.trim();
+  const pass=document.getElementById('li-pass').value;
+  if(!email||!pass){mostrarLoginError('Ingresa tu correo y contraseña.');return;}
+  try{
+    await fbAuth.signInWithEmailAndPassword(email,pass);
+  }catch(e){
+    const msgs={
+      'auth/user-not-found':'No existe una cuenta con ese correo.',
+      'auth/wrong-password':'Contraseña incorrecta.',
+      'auth/invalid-email':'El correo no es válido.',
+      'auth/too-many-requests':'Demasiados intentos. Espera unos minutos.'
+    };
+    mostrarLoginError(msgs[e.code]||'Error al ingresar. Intenta de nuevo.');
+  }
+}
+
+async function registrarEmail(){
+  const nombre=document.getElementById('lr-nombre').value.trim();
+  const email=document.getElementById('lr-email').value.trim();
+  const pass=document.getElementById('lr-pass').value;
+  const pass2=document.getElementById('lr-pass2').value;
+  if(!nombre||!email||!pass){mostrarLoginError('Completa todos los campos.');return;}
+  if(pass.length<6){mostrarLoginError('La contraseña debe tener al menos 6 caracteres.');return;}
+  if(pass!==pass2){mostrarLoginError('Las contraseñas no coinciden.');return;}
+  try{
+    const cred=await fbAuth.createUserWithEmailAndPassword(email,pass);
+    await cred.user.updateProfile({displayName:nombre});
+  }catch(e){
+    const msgs={
+      'auth/email-already-in-use':'Ya existe una cuenta con ese correo.',
+      'auth/invalid-email':'El correo no es válido.',
+      'auth/weak-password':'La contraseña es muy débil.'
+    };
+    mostrarLoginError(msgs[e.code]||'Error al registrarse. Intenta de nuevo.');
+  }
+}
+
+async function loginGoogle(){
+  try{
+    const provider=new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({prompt:'select_account'});
+    // Intentar popup primero; si falla (archivo local), usar redirect
+    try{
+      await fbAuth.signInWithPopup(provider);
+    }catch(popupErr){
+      if(
+        popupErr.code==='auth/popup-blocked'||
+        popupErr.code==='auth/popup-closed-by-user'||
+        popupErr.code==='auth/cancelled-popup-request'||
+        popupErr.code==='auth/unauthorized-domain'||
+        popupErr.code==='auth/operation-not-supported-in-this-environment'
+      ){
+        // Popup no disponible — usar redirect
+        setSS('spin','Redirigiendo a Google...');
+        await fbAuth.signInWithRedirect(provider);
+      }else{
+        throw popupErr;
+      }
+    }
+  }catch(e){
+    console.warn('Google login error:',e.code,e.message);
+    mostrarLoginError('No se pudo ingresar con Google. Usa correo y contraseña.');
+  }
+}
+
+// Manejar resultado del redirect al volver de Google
+async function checkRedirectResult(){
+  if(!fbAuth)return;
+  try{
+    const result=await fbAuth.getRedirectResult();
+    if(result&&result.user){
+      // El onAuthStateChanged se encarga del resto
+      console.log('Redirect login exitoso');
+    }
+  }catch(e){
+    if(e.code!=='auth/no-current-user'){
+      console.warn('Error redirect result:',e);
+    }
+  }
+}
+
+function cerrarSesion(){
+  if(!confirm('¿Cerrar sesión?'))return;
+  fbAuth.signOut();
+}
+
+function actualizarUIUsuario(user){
+  const bar=document.getElementById('user-bar');
+  const av=document.getElementById('user-avatar');
+  const nm=document.getElementById('user-name');
+  if(user){
+    bar.style.display='flex';
+    nm.textContent=(user.displayName||user.email||'').split(' ')[0];
+    if(user.photoURL){
+      av.innerHTML=`<img src="${user.photoURL}" alt="">`;
+    }else{
+      const ini=(user.displayName||user.email||'?')[0].toUpperCase();
+      av.textContent=ini;av.innerHTML=ini;
+    }
+  }else{
+    bar.style.display='none';
+    av.textContent='?';nm.textContent='';
+  }
+}
+
+function activarListenerTiempoReal(){
+  // Este listener SOLO se activa DESPUÉS de la carga inicial
+  // Su único propósito es detectar cambios desde OTRO dispositivo
+  if(!fbRef)return;
+  fbRef.on('value', snap=>{
+    if(!fbInicializado)return; // Ignorar el primer disparo (ya lo procesó loadData)
+    const data=snap.val();
+    if(!data)return;
+    const tsRemoto=data.ts||0;
+    const tsLocal=window._lastSaveTs||0;
+    // Solo actualizar si el cambio vino de otro dispositivo (timestamp más reciente)
+    if(tsRemoto>tsLocal+2000){
+      P=data.P||[];A=data.A||[];DIAS=data.DIAS||[];
+      LICS=data.LICS||[];EVINTS=data.EVINTS||[];
+      CFG=data.CFG||{};corrRes=data.corrRes||1;
+      setSS('ok','Actualizado desde otro dispositivo ✓');
+      initUI();render();
+      toast('Datos actualizados desde otro dispositivo','ok');
+    }
+  });
+}
+
+// ══════════════════════════════════════════
+// STORAGE — Firebase + localStorage fallback
+// ══════════════════════════════════════════
+function cargarDesdeLocal(){
+  try{
+    P=JSON.parse(localStorage.getItem(SK+'_p')||'[]');
+    A=JSON.parse(localStorage.getItem(SK+'_a')||'[]');
+    DIAS=JSON.parse(localStorage.getItem(SK+'_d')||'[]');
+    LICS=JSON.parse(localStorage.getItem(SK+'_l')||'[]');
+    EVINTS=JSON.parse(localStorage.getItem(SK+'_e')||'[]');
+    CFG=JSON.parse(localStorage.getItem(SK+'_cfg')||'{}')||{};
+    corrRes=parseInt(localStorage.getItem(SK+'_c')||'1');
+  }catch(e){}
+}
+
+function guardarEnLocal(){
+  try{
+    localStorage.setItem(SK+'_p',JSON.stringify(P));
+    localStorage.setItem(SK+'_a',JSON.stringify(A));
+    localStorage.setItem(SK+'_d',JSON.stringify(DIAS));
+    localStorage.setItem(SK+'_l',JSON.stringify(LICS));
+    localStorage.setItem(SK+'_e',JSON.stringify(EVINTS));
+    localStorage.setItem(SK+'_cfg',JSON.stringify(CFG));
+    localStorage.setItem(SK+'_c',corrRes.toString());
+  }catch(e){}
+}
+
+async function loadData(uid){
+  setSS('spin','Cargando datos...');
+  // Ruta separada por usuario — cada uno ve solo sus datos
+  fbRef=fbDB.ref('usuarios/'+uid+'/hv_data');
+
+  try{
+    const snapPromise=fbRef.once('value');
+    const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),6000));
+    const snap=await Promise.race([snapPromise,timeout]);
+    const data=snap.val();
+
+    if(data&&(data.P?.length||data.A?.length||data.CFG?.nombre)){
+      P=data.P||[];A=data.A||[];DIAS=data.DIAS||[];
+      LICS=data.LICS||[];EVINTS=data.EVINTS||[];
+      CFG=data.CFG||{};corrRes=data.corrRes||1;
+      guardarEnLocal();
+      setSS('ok','Sincronizado ✓');
+    }else{
+      // Primera vez — intentar migrar datos locales
+      cargarDesdeLocal();
+      if(P.length||A.length){
+        setSS('spin','Migrando datos a la nube...');
+        await saveData();
+        setSS('ok','Datos migrados ✓');
+      }else{
+        setSS('ok','Listo');
+      }
+    }
+  }catch(err){
+    console.warn('Error cargando Firebase:',err);
+    cargarDesdeLocal();
+    setSS('ok','Sin conexión — datos locales');
+  }
+
+  fbInicializado=true;
+  try{activarListenerTiempoReal();}catch(e){}
+  try{initUI();}catch(e){}
+  try{render();}catch(e){}
+  ocultarLoading();
+}
+
+async function saveData(){
+  setSS('spin','Guardando...');
+  const ts=Date.now();
+  window._lastSaveTs=ts;
+  const data={P,A,DIAS,LICS,EVINTS,CFG,corrRes,ts};
+  // Siempre guardar local como respaldo
+  guardarEnLocal();
+  // Guardar en Firebase si está disponible
+  if(fbRef){
+    try{
+      await fbRef.set(data);
+      setSS('ok','Guardado en la nube ✓');
+      return;
+    }catch(e){
+      setSS('ok','Guardado local (sin conexión)');
+    }
+  }else{
+    setSS('ok','Guardado local ✓');
+  }
+}        localStorage.setItem(SK+'_d',JSON.stringify(DIAS));localStorage.setItem(SK+'_l',JSON.stringify(LICS));
+function dSave(){clearTimeout(saveT);saveT=setTimeout(saveData,1200);}
+function guardarManual(){clearTimeout(saveT);saveData().then(()=>toast('Cambios guardados en la nube ☁','ok'));}
+function setSS(st,msg){
+  document.getElementById('sync-lbl').textContent=msg;
+  document.getElementById('sync-dot').className='sync-dot'+(st==='spin'?' spin':'');
+  const lm=document.getElementById('lm');if(lm)lm.textContent=msg;
+}
+function ocultarLoading(){
+  const ls=document.getElementById('loading-screen');
+  if(!ls)return;
+  ls.classList.add('fade');
+  setTimeout(()=>ls.classList.add('gone'),500);
+}
+
+// ══════════════════════════════════════════
+// EXPORT / IMPORT
+// ══════════════════════════════════════════
+function exportarDatos(){
+  const datos={P,A,DIAS,LICS,EVINTS,CFG,corrRes,exportado:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(datos,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`HV_respaldo_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  toast('Datos exportados','ok');
+}
+
+function importarDatos(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(!confirm('¿Importar datos? Esto reemplazará todos los datos actuales.'))return;
+      if(d.P)P=d.P;if(d.A)A=d.A;if(d.DIAS)DIAS=d.DIAS;
+      if(d.LICS)LICS=d.LICS;if(d.EVINTS)EVINTS=d.EVINTS;
+      if(d.CFG)CFG=d.CFG;if(d.corrRes)corrRes=d.corrRes;
+      saveData();initUI();render();closeD('d-config');
+      toast('Datos importados correctamente','ok');
+    }catch(err){toast('Error al importar el archivo','err');}
+  };
+  r.readAsText(file);
+  e.target.value='';
+}
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+function ini(n,a){return(((a||'').trim()[0]||'?')+((n||'').trim()[0]||'')).toUpperCase();}
+function hoy(){return new Date().toISOString().split('T')[0];}
+function uuid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function fmtF(f){if(!f)return'—';const[y,m,d]=f.split('-');const ms=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];return`${parseInt(d)}${ms[parseInt(m)-1]}${y}`;}
+function diasHasta(f){if(!f)return null;const d=new Date(f)-new Date();return Math.ceil(d/(1000*60*60*24));}
+
+function toast(msg,type='',dur=2500){
+  const w=document.getElementById('tw');
+  const t=document.createElement('div');
+  t.className='toast'+(type?' '+type:'');t.textContent=msg;w.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .3s';setTimeout(()=>t.remove(),300);},dur);
+}
+
+// ══════════════════════════════════════════
+// CÁLCULO DE PUNTAJES
+// ══════════════════════════════════════════
+function calcEvintNota(pid,numEvint){
+  const ev=EVINTS.find(x=>x.pid===pid&&x.num==numEvint);
+  if(!ev||ev.realiza==='no')return null;
+  const p=P.find(x=>x.id===pid);if(!p)return null;
+  const cat=CATS[p.cat]||CATS.sof;
+  const descriptores=(p.cat==='clase'||p.cat==='som')?EVINT_CLASE:EVINT_SOF;
+  const notasPorConc={};
+  cat.concs.forEach(c=>{
+    const descsConc=descriptores.filter(d=>d.conc===c);
+    const vals=descsConc.map(d=>{const k=`d${d.num}`;const freq=ev.respuestas?.[k];return FREQ_VALS[freq];}).filter(v=>v!==null&&v!==undefined);
+    if(vals.length>0){notasPorConc[c]=parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2));}
+    else{notasPorConc[c]=null;}
+  });
+  return notasPorConc;
+}
+
+function calcPts(pid){
+  const pers=P.find(x=>x.id===pid);if(!pers)return{tm:6,lista:'2',notas:{},cat:CATS.sof,notasFinal:{}};
+  const cat=CATS[pers.cat]||CATS.sof;
+  const notasHVD={};cat.concs.forEach(c=>{notasHVD[c]=6;});
+  A.filter(x=>x.pid===pid&&(x.tipo==='merito'||x.tipo==='demerito')).forEach(x=>{
+    if(notasHVD[x.conc]===undefined)notasHVD[x.conc]=6;
+    notasHVD[x.conc]=Math.min(7,Math.max(1,parseFloat((notasHVD[x.conc]+parseFloat(x.punt||0)).toFixed(2))));
+  });
+  const ev1=calcEvintNota(pid,1);
+  const ev2=calcEvintNota(pid,2);
+  const notasFinal={};
+  cat.concs.forEach(c=>{
+    const hvd=notasHVD[c]||6;
+    const n1=ev1?ev1[c]:null;
+    const n2=ev2?ev2[c]:null;
+    if(n1!==null&&n2!==null){
+      const evintProm=parseFloat(((n1+n2)/2).toFixed(2));
+      notasFinal[c]=Math.min(7,Math.max(1,parseFloat(((hvd+evintProm)/2).toFixed(2))));
+    }else if(n1!==null){
+      notasFinal[c]=Math.min(7,Math.max(1,parseFloat(((hvd+n1)/2).toFixed(2))));
+    }else if(n2!==null){
+      notasFinal[c]=Math.min(7,Math.max(1,parseFloat(((hvd+n2)/2).toFixed(2))));
+    }else{
+      notasFinal[c]=hvd;
+    }
+  });
+  const vals=cat.concs.map(c=>notasFinal[c]);
+  const tm=vals.length?parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2)):6;
+  const minN=vals.length?Math.min(...vals):6;
+  const lista=tm>=6&&minN>=5.5?'1':tm>=4.5&&minN>=4?'2':tm>=3&&minN>=2.5?'3':'4';
+  return{tm,lista,notas:notasHVD,notasFinal,ev1Notas:ev1,ev2Notas:ev2,cat};
+}
+
+function calcDias(pid){
+  const total=parseFloat(CFG.diasAnuales||6);
+  const usados=DIAS.filter(x=>x.pid===pid).reduce((s,x)=>s+parseFloat(x.dias||0),0);
+  return{total,usados,disponibles:Math.max(0,total-usados)};
+}
+
+function calcLics(pid){
+  const lics=LICS.filter(x=>x.pid===pid);
+  const totalDias=lics.reduce((s,x)=>s+parseInt(x.dias||0),0);
+  return{lics,totalDias};
+}
+
+// ══════════════════════════════════════════
+// RENDER PRINCIPAL
+// ══════════════════════════════════════════
+function render(){
+  renderMet();renderInicio();renderHVPicker();renderHV();
+  renderPuntajes();renderDias();renderLicencias();renderEvint();
+  renderRes();updSels();updBadgeRes();renderAlertas();
+}
+
+function renderMet(){
+  document.getElementById('mt-0').textContent=P.length;
+  document.getElementById('mt-1').textContent=A.filter(x=>x.tipo==='merito').length;
+  document.getElementById('mt-2').textContent=A.filter(x=>x.tipo==='demerito').length;
+  document.getElementById('mt-3').textContent=A.filter(x=>x.notif==='pendiente').length;
+}
+
+function renderAlertas(){
+  // Alertas de plazos EVINT
+  const plazos=[];
+  const alDias=parseInt(CFG.alertaDias||15);
+  if(CFG.evint1){const d=diasHasta(CFG.evint1);if(d>=0&&d<=alDias)plazos.push(`⚠ EVINT N°1 vence en ${d} días (${fmtF(CFG.evint1)}).`);}
+  if(CFG.evint2){const d=diasHasta(CFG.evint2);if(d>=0&&d<=alDias)plazos.push(`⚠ EVINT N°2 vence en ${d} días (${fmtF(CFG.evint2)}).`);}
+  document.getElementById('alertas-plazos').innerHTML=plazos.map(a=>`<div class="abox warn">${a}</div>`).join('');
+
+  // Notificaciones con más de 5 días pendientes
+  const hoyD=new Date();
+  const pendientes=A.filter(x=>(x.tipo==='merito'||x.tipo==='demerito')&&x.notif==='pendiente').map(x=>{
+    const p=P.find(q=>q.id===x.pid);
+    const dias=Math.floor((hoyD-new Date(x.fecha))/(1000*60*60*24));
+    return{...x,pNombre:p?`${p.grado} ${p.apell}`:'—',dias};
+  }).filter(x=>x.dias>=5).sort((a,b)=>b.dias-a.dias);
+
+  const elN=document.getElementById('alertas-notif');
+  if(pendientes.length){
+    elN.innerHTML=`<div class="card" style="margin-bottom:8px"><div class="ch"><span class="cht">⏰ Notificaciones pendientes (+5 días)</span></div>${pendientes.slice(0,3).map(x=>`<div class="notif-item"><div class="notif-dot"></div><div class="notif-info"><div class="notif-name">${x.pNombre}</div><div class="notif-sub">${x.tipo==='merito'?'Mérito':'Demérito'} N°${x.conc} — ${x.fecha}</div></div><div class="notif-days">${x.dias}d</div></div>`).join('')}</div>`;
+  }else{elN.innerHTML='';}
+}
+
+function renderInicio(){
+  const el=document.getElementById('lista-personal');
+  if(!P.length){el.innerHTML=`<div class="es"><div class="es-i">🪖</div><div class="es-t">Sin personal registrado</div><div class="es-s">Agrega a tu dotación para comenzar.</div></div>`;return;}
+  el.innerHTML=P.map((p,i)=>{
+    const{tm,lista}=calcPts(p.id);
+    const lbcls={'1':'bg','2':'bi','3':'bw2','4':'br'}[lista]||'bi';
+    const pct=Math.round(((tm-1)/6)*100);
+    const bg=tm>=5.5?'var(--su)':tm>=4?'var(--go)':'var(--da)';
+    const tc=tm>=5.5?'var(--su)':tm>=4?'var(--wa)':'var(--da)';
+    return`<div class="pi" onclick="irHV('${p.id}')">
+      <div class="av">${ini(p.nomb,p.apell)}</div>
+      <div class="pinfo">
+        <div class="pname">${p.apell} ${p.nomb}</div>
+        <div class="psub">${p.grado} ${p.escal} | ${p.cargo||'Sin cargo'}</div>
+      </div>
+      <div class="pright">
+        <span class="tmv" style="color:${tc}">${tm}</span>
+        <div class="bw"><div class="bf" style="width:${pct}%;background:${bg}"></div></div>
+        <span class="badge ${lbcls}">Lista ${lista}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  const alerts=[];
+  P.forEach(p=>{
+    const{lista}=calcPts(p.id);
+    const m=A.filter(x=>x.pid===p.id&&x.tipo==='merito').length;
+    if(lista==='3')alerts.push(`<b>${p.grado} ${p.apell}</b> proyecta Lista N°3.`);
+    if(lista==='4')alerts.push(`<b>${p.grado} ${p.apell}</b> proyecta Lista N°4 — incluir en Lista de Retiro.`);
+    if(m>=2)alerts.push(`<b>${p.grado} ${p.apell}</b> tiene ${m} méritos. Próxima felicitación: escalón superior.`);
+  });
+  document.getElementById('alertas-inicio').innerHTML=alerts.map(a=>`<div class="abox warn">${a}</div>`).join('');
+}
+
+function renderHVPicker(){
+  const el=document.getElementById('hv-picker');
+  if(!P.length){el.innerHTML='';return;}
+  el.innerHTML=`<div class="hvp">${P.map(p=>`
+    <div class="hvpi${hvPid===p.id?' on':''}" onclick="setHVP('${p.id}')">
+      <div class="av" style="width:30px;height:30px;font-size:10px">${ini(p.nomb,p.apell)}</div>
+      <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.grado} ${p.apell} ${p.nomb}</div>
+      <div style="font-size:10px;color:var(--mu)">${CATS[p.cat]?.label}</div></div>
+      ${hvPid===p.id?'<span style="color:var(--ol);font-size:14px">✓</span>':''}
+    </div>`).join('')}
+  </div>`;
+}
+
+function setHVP(pid){hvPid=pid;renderHVPicker();renderHV();}
+
+function renderHV(){
+  const el=document.getElementById('hv-cont');
+  if(!hvPid){el.innerHTML=`<div class="es"><div class="es-i">☰</div><div class="es-t">Selecciona un integrante</div></div>`;return;}
+  const p=P.find(x=>x.id===hvPid);if(!p){el.innerHTML='';return;}
+  const{tm,lista}=calcPts(hvPid);
+  const ants=A.filter(x=>x.pid===hvPid).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const lbcls={'1':'bg','2':'bi','3':'bw2','4':'br'}[lista]||'bi';
+  const lbtxt={'1':'Lista N°1','2':'Lista N°2','3':'Lista N°3','4':'Lista N°4'}[lista];
+  const tc=tm>=5.5?'var(--su)':tm>=4?'var(--wa)':'var(--da)';
+  const calAbrev=CFG.nombre?(CFG.nombre.split(' ').slice(0,2).join(' ')):'—';
+  const persAbrev=p.apell.split(' ').slice(0,2).join(' ');
+  const nbdg={pendiente:'<span class="badge bw2" style="font-size:8px">Pendiente</span>',conforme:'<span class="badge bg" style="font-size:8px">Conforme</span>',reconsiderado:'<span class="badge bw2" style="font-size:8px">Reconsideró</span>',negado:'<span class="badge br" style="font-size:8px">Negó</span>'};
+  const mostrarFirmasConst=(tc)=>['evint','evint_no_real','cierre','feriado','lic_total','lic_parcial','lic_prenatal','lic_hijo','com_nac','com_ext','junta_seleccion','neg_firma','sin_firma_calif','notif_carta','acta_notif'].includes(tc);
+
+  const filas=ants.map(a=>{
+    let tl='',tc2='',conc='',texto='',resol='',mf=true;
+    if(a.tipo==='merito'){
+      tl='FELICITACIÓN';tc2='m';conc=CNOMS[a.conc]||'';
+      const pv=Math.abs(parseFloat(a.punt)).toFixed(2).replace('.',',');
+      texto=`Es felicitado con ${pv} ptos. (${PTXT[a.punt]||a.punt})`;
+      if(a.desc)texto+=`<br><span style="font-size:10px;color:var(--mu)">${a.desc}</span>`;
+      if(a.resol)resol=`(Res. Exenta N° ${a.resol})`;
+    }else if(a.tipo==='demerito'){
+      tl='SANCIÓN';tc2='d';conc=CNOMS[a.conc]||'';
+      texto=a.desc||'';
+      const pv=Math.abs(parseFloat(a.punt)).toFixed(2).replace('.',',');
+      texto+=`<br><span style="font-size:10px;color:var(--mu)">Con ${pv} pts. (${PTXT[a.punt]||a.punt})</span>`;
+      if(a.resol)resol=`(Res. Exenta N° ${a.resol})`;
+    }else{
+      tl=TCONST[a.tconst]||'CONSTANCIA';tc2='c';
+      texto=buildConstTxt(a);mf=mostrarFirmasConst(a.tconst);
+      if(a.docOrig)resol=`(${a.docOrig})`;
+    }
+    return`<div class="hv-row">
+      <div class="hvc"><div class="hvf">${fmtF(a.fecha)}</div><div class="hvfi">${a.fecha}</div></div>
+      <div class="hvc">
+        <div class="hvt ${tc2}">${tl}</div>
+        ${conc?`<div class="hvc2">${conc}</div>`:''}
+        <div class="hvtx">${texto}</div>
+        ${resol?`<div class="hvrl">${resol}</div>`:''}
+      </div>
+      <div class="hvc" style="text-align:center">
+        ${mf?`<div class="hv-firmas">
+          <div class="hv-fn">${calAbrev}</div><div class="hv-fg">${CFG.grado||'—'}</div>
+          <div class="hv-fsep"><div class="hv-fn">${persAbrev}</div><div class="hv-fg">${p.grado}</div></div>
+          <div style="margin-top:3px">${nbdg[a.notif]||''}</div>
+        </div>`:'<span style="color:var(--mu);font-size:9px">—</span>'}
+      </div>
+      <button class="hv-edit-btn" onclick="editarAnot('${a.id}')">✎ Editar</button>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=`
+  <div style="background:#fff;border:1px solid var(--bo);border-radius:var(--rl);margin-bottom:8px">
+    <div style="padding:12px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:7px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="av" style="width:42px;height:42px;font-size:14px">${ini(p.nomb,p.apell)}</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--old)">${p.grado} (${p.escal}) ${p.apell} ${p.nomb}</div>
+          <div style="font-size:11px;color:var(--mu);margin-top:2px">${p.cargo||'Sin cargo'} | RUN: ${p.run||'—'} | ${CATS[p.cat]?.label}</div>
+        </div>
+      </div>
+      <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+        <span style="font-size:20px;font-weight:700;font-family:var(--mo);color:${tc}">T/M ${tm}</span>
+        <span class="badge ${lbcls}">${lbtxt}</span>
+        <button class="btn btn-xs" onclick="editarPersona(${P.indexOf(p)})">✎ Editar datos</button>
+      </div>
+    </div>
+    ${p.obs?`<div class="obs-box" style="margin:0 12px 12px"><div class="obs-lbl">Observaciones generales</div><div class="obs-txt">${p.obs}</div></div>`:''}
+  </div>
+  <div style="display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap">
+    <button class="btn btn-sm" onclick="openAnot('merito')" style="background:var(--sb);color:var(--su);border-color:var(--sc)">+ Mérito</button>
+    <button class="btn btn-sm" onclick="openAnot('demerito')" style="background:var(--db);color:var(--da);border-color:var(--dc)">+ Demérito</button>
+    <button class="btn btn-sm" onclick="openAnot('constancia')" style="background:var(--ib);color:var(--ia);border-color:var(--ic)">+ Constancia</button>
+  </div>
+  <div class="hv-doc">
+    <div class="hv-tbar">H &nbsp; O &nbsp; J &nbsp; A &nbsp; &nbsp; D E &nbsp; &nbsp; V &nbsp; I &nbsp; D &nbsp; A</div>
+    <div class="hv-mstrip">
+      <span><span class="hv-ml">DEL:</span><span class="hv-mv">${p.grado} (${p.escal}) ${p.apell} ${p.nomb}</span></span>
+      <span><span class="hv-ml">DESDE:</span><span class="hv-mv">${CFG.ini||'—'}</span></span>
+      <span><span class="hv-ml">HASTA:</span><span class="hv-mv">${CFG.fin||'—'}</span></span>
+    </div>
+    <div class="hv-cols">
+      <div class="hv-ch">F E C H A</div>
+      <div class="hv-ch">A N O T A C I O N E S</div>
+      <div class="hv-ch">F I R M A S</div>
+    </div>
+    ${ants.length?filas:`<div class="es" style="padding:1.5rem"><div class="es-t">Sin anotaciones</div></div>`}
+    ${ants.length?`<div style="padding:10px 12px;border-top:1px solid var(--bo);display:flex;justify-content:space-between;font-size:10px;font-family:var(--mo);background:var(--olp)">
+      <div style="text-align:center"><div style="font-weight:700">${(CFG.nombre||'CALIFICADOR').split(' ').slice(0,2).join(' ')}</div><div style="color:var(--mu)">${CFG.grado||''}</div></div>
+      <div style="text-align:center"><div style="font-weight:700">${p.apell.split(' ').slice(0,2).join(' ')}</div><div style="color:var(--mu)">${p.grado}</div></div>
+    </div>`:''}
+  </div>`;
+}
+
+function buildConstTxt(a){
+  const cf=['lic_total','lic_parcial','lic_prenatal','lic_hijo','com_nac','com_ext','feriado','permiso_psr'];
+  if(a.tconst==='evint'){const res={conforme:'declarándose conforme',reconsiderado:'presentando reconsideración',negado:'negándose a firmar'}[a.evintRes]||'';return`Se deja constancia que tomó conocimiento de su evaluación integral con fecha ${fmtF(a.fecha)}, ${res}.`;}
+  if(a.tconst==='cierre')return'Cierre por término del periodo de calificaciones.';
+  if(cf.includes(a.tconst)){let t=`Se deja constancia que se le concede ${(TCONST[a.tconst]||'').toLowerCase()}${a.cdias?' de '+a.cdias+' días':''}.${a.cfechas?' '+a.cfechas:''}`;if(a.obs)t+=` ${a.obs}`;return t;}
+  let t=TCONST[a.tconst]||'Constancia administrativa.';if(a.obs)t+=` ${a.obs}`;return t;
+}
+
+function renderPuntajes(){
+  const el=document.getElementById('cont-puntajes');
+  if(!P.length){el.innerHTML=`<div class="es"><div class="es-i">◎</div><div class="es-t">Sin personal</div></div>`;return;}
+  el.innerHTML=P.map(p=>{
+    const{tm,lista,notas,notasFinal,ev1Notas,ev2Notas,cat}=calcPts(p.id);
+    const lbcls={'1':'bg','2':'bi','3':'bw2','4':'br'}[lista]||'bi';
+    const lbtxt={'1':'Lista N°1 — Muy buena','2':'Lista N°2 — Normal','3':'Lista N°3 — Condicional','4':'Lista N°4 — Deficiente'}[lista];
+    const m=A.filter(x=>x.pid===p.id&&x.tipo==='merito').length,d=A.filter(x=>x.pid===p.id&&x.tipo==='demerito').length;
+    const alerts=[];
+    if(lista==='3')alerts.push('Proyecta Lista N°3.');
+    if(lista==='4')alerts.push('Proyecta Lista N°4 — Lista de Retiro.');
+    if(m>=2)alerts.push('Límite 2 méritos alcanzado. Próxima felicitación: escalón superior.');
+
+    // Tabla de notas
+    const filas=cat.concs.map(c=>{
+      const hvd=notas[c]||6;
+      const n1=ev1Notas?ev1Notas[c]:null;
+      const n2=ev2Notas?ev2Notas[c]:null;
+      const nf=notasFinal[c]||hvd;
+      const col=nf>=5.5?'var(--su)':nf>=4?'var(--wa)':'var(--da)';
+      return`<tr>
+        <td>N°${c} ${CNOMS[c]}</td>
+        <td>${hvd}</td>
+        <td>${n1!==null?n1:'—'}</td>
+        <td>${n2!==null?n2:'—'}</td>
+        <td style="color:${col};font-weight:700">${nf}</td>
+      </tr>`;
+    }).join('');
+
+    return`<div class="ppc">
+      <div class="pphead">
+        <div style="display:flex;align-items:center;gap:9px">
+          <div class="av">${ini(p.nomb,p.apell)}</div>
+          <div><div style="font-weight:700;color:var(--old)">${p.grado} ${p.apell} ${p.nomb}</div>
+          <div style="font-size:10px;color:var(--mu)">${CATS[p.cat]?.label} · ${cat.concs.length} conceptos</div></div>
+        </div>
+        <div style="text-align:right">
+          <span class="badge ${lbcls}">${lbtxt}</span>
+          <div style="font-size:10px;color:var(--mu);margin-top:3px;font-family:var(--mo)">T/M <b>${tm}</b> | +${m} −${d}</div>
+        </div>
+      </div>
+      ${alerts.map(a=>`<div class="abox warn" style="font-size:11px;margin-bottom:5px">${a}</div>`).join('')}
+      <div style="overflow-x:auto">
+        <table class="evint-summary-table">
+          <thead><tr><th style="text-align:left">Concepto</th><th>Nota HVD</th><th>EVINT N°1</th><th>EVINT N°2</th><th>Nota Final</th></tr></thead>
+          <tbody>${filas}</tbody>
+          <tfoot><tr><td colspan="4" style="text-align:right;font-weight:700;font-size:11px">T/M FINAL</td><td style="font-weight:700;font-family:var(--mo);color:${tm>=5.5?'var(--su)':tm>=4?'var(--wa)':'var(--da)'}">${tm}</td></tr></tfoot>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderDias(){
+  const el=document.getElementById('cont-dias');
+  if(!P.length){el.innerHTML=`<div class="es"><div class="es-i">📅</div><div class="es-t">Sin personal</div></div>`;return;}
+  const total=parseFloat(CFG.diasAnuales||6);
+  el.innerHTML=`<div class="abox info" style="margin-bottom:8px">Días disponibles anuales: <b>${total}</b>. Configura en ⚙ si corresponde.</div>`+
+  P.map(p=>{
+    const{usados,disponibles}=calcDias(p.id);
+    const pct=Math.min(100,Math.round((usados/total)*100));
+    const col=disponibles<=1?'var(--da)':disponibles<=2?'var(--go)':'var(--su)';
+    const dias=DIAS.filter(x=>x.pid===p.id).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+    return`<div class="dpc">
+      <div class="dph">
+        <div class="av">${ini(p.nomb,p.apell)}</div>
+        <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:12px">${p.grado} ${p.apell} ${p.nomb}</div>
+        <div style="font-size:10px;color:var(--mu)">${p.cargo||'Sin cargo'}</div></div>
+        <button class="btn btn-sm btn-p" onclick="openDiasAnotP('${p.id}')">+ Día</button>
+      </div>
+      <div class="dprog">
+        <div style="font-size:10px;color:var(--mu);white-space:nowrap">Usados: <b>${usados}</b></div>
+        <div class="dpb"><div class="dpf" style="width:${pct}%;background:${col}"></div></div>
+        <div class="dpl" style="color:${col}">${disponibles}d disp.</div>
+      </div>
+      ${dias.length?dias.map(d=>{const dt=DTIPO[d.tipo]||DTIPO.otro;return`<div class="de">
+        <div class="dei" style="background:${dt.color}"><span style="color:${dt.tc}">${dt.icon}</span></div>
+        <div class="dein"><div class="ded">${dt.label}</div>
+        <div class="def">${fmtF(d.fecha)}${d.autor?' · Aut: '+d.autor:''}${d.docOrig?' · '+d.docOrig:''}</div></div>
+        <div style="display:flex;align-items:center;gap:5px">
+          <span style="font-size:12px;font-weight:700;font-family:var(--mo)">${d.dias}d</span>
+          <button class="btn btn-xs" onclick="editarDia('${d.id}')">✎</button>
+        </div>
+      </div>`;}).join(''):`<div style="padding:12px;text-align:center;font-size:11px;color:var(--mu)">Sin registros.</div>`}
+    </div>`;
+  }).join('');
+}
+
+function renderLicencias(){
+  const el=document.getElementById('cont-licencias');
+  if(!P.length){el.innerHTML=`<div class="es"><div class="es-i">🏥</div><div class="es-t">Sin personal</div></div>`;return;}
+  el.innerHTML=P.map(p=>{
+    const{lics,totalDias}=calcLics(p.id);
+    return`<div class="lic-card">
+      <div class="lic-head">
+        <div class="av">${ini(p.nomb,p.apell)}</div>
+        <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:12px">${p.grado} ${p.apell} ${p.nomb}</div>
+        <div style="font-size:10px;color:var(--da);margin-top:1px">${p.cargo||'Sin cargo'}</div></div>
+        <button class="btn btn-sm" onclick="openLicAnotP('${p.id}')" style="background:#fff;border-color:var(--dc);color:var(--da)">+ Licencia</button>
+      </div>
+      <div class="lic-total-strip">
+        <span style="font-size:11px;color:var(--mu)">Total en período: <b style="color:var(--da);font-family:var(--mo)">${totalDias} días</b></span>
+        <span style="font-size:11px;color:var(--mu)">${lics.length} licencia${lics.length!==1?'s':''}</span>
+      </div>
+      ${lics.length?lics.sort((a,b)=>b.fi.localeCompare(a.fi)).map(l=>`
+        <div class="lic-item">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;color:var(--ink)">${LTIPO[l.tipo]||l.tipo}</div>
+            <div style="font-size:10px;color:var(--mu);margin-top:2px">${fmtF(l.fi)} → ${fmtF(l.ft)} | <b>${l.dias} días</b>${l.nro?' | Nro: '+l.nro:''}${l.medico?' | '+l.medico:''}</div>
+            ${l.diag?`<div style="font-size:10px;color:var(--mu)">Diagnóstico: ${l.diag}</div>`:''}
+          </div>
+          <button class="btn btn-xs" onclick="editarLic('${l.id}')">✎</button>
+        </div>`).join(''):`<div style="padding:12px;text-align:center;font-size:11px;color:var(--mu)">Sin licencias registradas.</div>`}
+    </div>`;
+  }).join('');
+}
+
+function renderEvint(){
+  const el=document.getElementById('cont-evint');
+  if(!P.length){el.innerHTML=`<div class="es"><div class="es-i">📋</div><div class="es-t">Sin personal</div></div>`;return;}
+  el.innerHTML=P.map(p=>{
+    const evs=EVINTS.filter(x=>x.pid===p.id);
+    const ev1=evs.find(x=>x.num==1);const ev2=evs.find(x=>x.num==2);
+    const descriptores=(p.cat==='clase'||p.cat==='som')?EVINT_CLASE:EVINT_SOF;
+    const cat=CATS[p.cat]||CATS.sof;
+    const mkEvCard=(ev,numStr)=>{
+      if(!ev)return`<div style="padding:10px 12px;text-align:center;font-size:11px;color:var(--mu)">Sin EVINT ${numStr} registrada. <button class="btn btn-xs btn-p" onclick="openEvintP('${p.id}',${numStr==='N°1'?1:2})" style="margin-left:6px">Agregar</button></div>`;
+      if(ev.realiza==='no')return`<div style="padding:10px 12px;font-size:11px;color:var(--mu)">No realiza EVINT ${numStr} (${fmtF(ev.fecha)}). <button class="btn btn-xs" onclick="editarEvint('${ev.id}')" style="margin-left:6px">✎ Editar</button></div>`;
+      const notas=calcEvintNota(p.id,ev.num===1?1:2);
+      const filas=cat.concs.map(c=>{
+        const nota=notas&&notas[c]!==null?notas[c]:'—';
+        const col=nota!=='—'?(nota>=5.5?'var(--su)':nota>=4?'var(--wa)':'var(--da)'):'var(--mu)';
+        return`<tr><td>N°${c} ${CNOMS[c]}</td><td style="color:${col};font-weight:700">${nota}</td></tr>`;
+      }).join('');
+      const justifs=[];
+      if(ev.justA)justifs.push(`<div class="abox info" style="margin-top:6px"><b>A — Justificación ≥75% Siempre:</b> ${ev.justA}</div>`);
+      if(ev.justB)justifs.push(`<div class="abox warn" style="margin-top:6px"><b>B — Justificación Casi Nunca:</b> ${ev.justB}</div>`);
+      if(ev.justC)justifs.push(`<div class="abox warn" style="margin-top:6px"><b>C — Justificación No Observado:</b> ${ev.justC}</div>`);
+      if(ev.justD)justifs.push(`<div class="abox info" style="margin-top:6px"><b>D — Justificación Sec./Fiscal ISA:</b> ${ev.justD}</div>`);
+      return`<div style="padding:10px 12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:11px;color:var(--mu)">Aplicada: <b>${fmtF(ev.fecha)}</b></span>
+          <button class="btn btn-xs" onclick="editarEvint('${ev.id}')">✎ Editar</button>
+        </div>
+        <div style="overflow-x:auto"><table class="evint-summary-table">
+          <thead><tr><th style="text-align:left">Concepto</th><th>Nota EVINT</th></tr></thead>
+          <tbody>${filas}</tbody>
+        </table></div>
+        ${justifs.join('')}
+        ${ev.recurso?`<div class="abox warn" style="margin-top:6px"><b>Recurso:</b> ${ev.recurso} — ${fmtF(ev.recursoFecha)}</div>`:''}
+      </div>`;
+    };
+    return`<div class="evint-card">
+      <div class="evint-head">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="av" style="width:30px;height:30px;font-size:10px;background:rgba(255,255,255,.2)">${ini(p.nomb,p.apell)}</div>
+          <div><div style="font-weight:700;font-size:13px">${p.grado} ${p.apell} ${p.nomb}</div>
+          <div style="font-size:10px;opacity:.7">${CATS[p.cat]?.label} — ${descriptores.length} descriptores</div></div>
+        </div>
+        <button class="btn btn-xs btn-go" onclick="openEvintP('${p.id}',1)">+ EVINT</button>
+      </div>
+      <div style="border-bottom:1px solid var(--bo)">
+        <div class="evint-conc-head">EVINT N°1 — Octubre ${new Date().getFullYear()}</div>
+        ${mkEvCard(ev1,'N°1')}
+      </div>
+      <div>
+        <div class="evint-conc-head">EVINT N°2 — Abril ${new Date().getFullYear()+1}</div>
+        ${mkEvCard(ev2,'N°2')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderRes(){
+  const el=document.getElementById('cont-res');
+  const ants=A.filter(x=>x.tipo==='merito'||x.tipo==='demerito').sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  if(!ants.length){el.innerHTML=`<div class="es"><div class="es-i">✦</div><div class="es-t">Sin méritos ni deméritos</div></div>`;return;}
+  el.innerHTML=ants.map(a=>{
+    const p=P.find(x=>x.id===a.pid);
+    const nombre=p?`${p.grado} ${p.apell} ${p.nomb}`:'—';
+    const tbdg=a.tipo==='merito'?'<span class="badge bg">Mérito</span>':'<span class="badge br">Demérito</span>';
+    const nbdg={pendiente:'<span class="badge bw2">Pendiente</span>',conforme:'<span class="badge bg">Conforme</span>',reconsiderado:'<span class="badge bw2">Reconsideró</span>',negado:'<span class="badge br">Negó</span>'}[a.notif]||'';
+    const pcol=parseFloat(a.punt)>0?'var(--su)':'var(--da)';
+    return`<div class="ri">
+      <div class="rim">
+        <div class="rin">${nombre}</div>
+        <div class="ris">
+          ${tbdg} ${nbdg}
+          <span style="font-family:var(--mo);font-weight:700;color:${pcol}">${a.punt}</span>
+          <span style="color:var(--mu)">N°${a.conc} ${CNOMS[a.conc]}</span>
+          <span style="color:var(--mu)">${a.fecha}</span>
+          ${a.resol?`<span style="font-family:var(--mo);font-size:10px;color:var(--mu)">${a.resol}</span>`:''}
+        </div>
+      </div>
+      <div class="ria">
+        <button class="btn btn-sm btn-go" onclick='verRes("${a.id}")'>Ver Res.</button>
+        <button class="btn btn-sm" onclick='editarAnot("${a.id}")'>✎</button>
+        <button class="btn btn-sm" onclick='cycleNotif("${a.id}")' title="Cambiar estado">↻</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updSels(){
+  const opts=P.map(p=>`<option value="${p.id}">${p.grado} ${p.apell} ${p.nomb}</option>`).join('');
+  const emp='<option value="">Sin personal</option>';
+  ['a-pers','dia-pers','lic-pers','ev-pers'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.innerHTML=opts||emp;
+  });
+}
+
+function updBadgeRes(){
+  const n=A.filter(x=>(x.tipo==='merito'||x.tipo==='demerito')&&x.notif==='pendiente').length;
+  const b=document.getElementById('badge-res');
+  if(n>0){b.classList.remove('hide');b.textContent=n;}else{b.classList.add('hide');}
+}
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function tab(id,btn){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(b=>b.classList.remove('on'));
+  document.getElementById(id).classList.add('on');btn.classList.add('on');
+  document.getElementById('scroll').scrollTop=0;
+}
+function stab(group,id,btn){
+  const par=document.getElementById(group+'_wrap')||document.getElementById(btn.closest('.sec').id);
+  const allTabs=btn.parentElement.querySelectorAll('.stab');
+  allTabs.forEach(t=>t.classList.remove('on'));btn.classList.add('on');
+  const allSecs=['st-dias','st-licencias'];
+  allSecs.forEach(s=>{const el=document.getElementById(s);if(el)el.style.display='none';});
+  document.getElementById(id).style.display='block';
+}
+function irHV(pid){hvPid=pid;tab('s-hv',document.querySelectorAll('.ni')[1]);renderHVPicker();renderHV();}
+
+// ══════════════════════════════════════════
+// DRAWERS
+// ══════════════════════════════════════════
+function openD(id){document.getElementById(id).classList.add('on');}
+function closeD(id){document.getElementById(id).classList.remove('on');}
+[...document.querySelectorAll('.dbg')].forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.remove('on');}));
+
+// ══════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════
+function initUI(){
+  const f=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
+  f('cfg-grado',CFG.grado);f('cfg-nombre',CFG.nombre);f('cfg-unidad',CFG.unidad);
+  f('cfg-abrev',CFG.abrev);f('cfg-nres',CFG.nres);f('cfg-corr',corrRes);
+  f('cfg-jpm',CFG.jpm);f('cfg-jpmcargo',CFG.jpmCargo);
+  f('cfg-ini',CFG.ini);f('cfg-fin',CFG.fin);
+  f('cfg-dias',CFG.diasAnuales||6);f('cfg-evint1',CFG.evint1);f('cfg-evint2',CFG.evint2);
+  f('cfg-alerta-dias',CFG.alertaDias||15);
+  document.getElementById('lbl-unidad').textContent=CFG.unidad||'Sin configurar';
+  document.getElementById('lbl-periodo').textContent=`Período: ${CFG.ini||'—'} → ${CFG.fin||'—'} | ${CFG.grado||''} ${CFG.nombre||'Sin configurar'}`;
+}
+
+function guardarConfig(){
+  CFG.grado=document.getElementById('cfg-grado').value.trim().toUpperCase();
+  CFG.nombre=document.getElementById('cfg-nombre').value.trim();
+  CFG.unidad=document.getElementById('cfg-unidad').value.trim();
+  CFG.abrev=document.getElementById('cfg-abrev').value.trim();
+  CFG.nres=document.getElementById('cfg-nres').value.trim();
+  corrRes=parseInt(document.getElementById('cfg-corr').value)||1;
+  CFG.jpm=document.getElementById('cfg-jpm').value.trim();
+  CFG.jpmCargo=document.getElementById('cfg-jpmcargo').value.trim();
+  CFG.ini=document.getElementById('cfg-ini').value;
+  CFG.fin=document.getElementById('cfg-fin').value;
+  CFG.diasAnuales=parseFloat(document.getElementById('cfg-dias').value)||6;
+  CFG.evint1=document.getElementById('cfg-evint1').value;
+  CFG.evint2=document.getElementById('cfg-evint2').value;
+  CFG.alertaDias=parseInt(document.getElementById('cfg-alerta-dias').value)||15;
+  closeD('d-config');initUI();render();dSave();toast('Configuración guardada','ok');
+}
+
+// ══════════════════════════════════════════
+// PERSONAL
+// ══════════════════════════════════════════
+function updCatInfo(){
+  const v=document.getElementById('p-cat').value;
+  const inf={som:'Suboficial Mayor: evalúa N°1,2,3,6.',sof:'Suboficial: evalúa los 9 conceptos.',clase:'Clase: evalúa N°1,2,3,4,5,7,8,9 (sin N°6).'};
+  document.getElementById('cat-info').textContent=inf[v]||'';
+}
+
+function editarPersona(i){
+  editPI=i;const p=P[i];
+  document.getElementById('d-pers-tit').textContent='✎ Editar integrante';
+  document.getElementById('p-grado').value=p.grado;
+  document.getElementById('p-escal').value=p.escal;
+  document.getElementById('p-apell').value=p.apell;
+  document.getElementById('p-nomb').value=p.nomb;
+  document.getElementById('p-run').value=p.run||'';
+  document.getElementById('p-cat').value=p.cat;
+  document.getElementById('p-cargo').value=p.cargo||'';
+  document.getElementById('p-ang').value=p.ang||'';
+  document.getElementById('p-obs').value=p.obs||'';
+  document.getElementById('p-delete-row').style.display='block';
+  updCatInfo();openD('d-persona');
+}
+
+function eliminarPersona(){
+  if(editPI<0)return;
+  const p=P[editPI];
+  if(!confirm(`¿Eliminar a ${p.grado} ${p.apell} ${p.nomb} y TODOS sus datos?\n\nEsta acción no se puede deshacer.`))return;
+  const pid=p.id;
+  P.splice(editPI,1);
+  A=A.filter(x=>x.pid!==pid);
+  DIAS=DIAS.filter(x=>x.pid!==pid);
+  LICS=LICS.filter(x=>x.pid!==pid);
+  EVINTS=EVINTS.filter(x=>x.pid!==pid);
+  if(hvPid===pid)hvPid=null;
+  editPI=-1;closeD('d-persona');render();dSave();toast('Integrante eliminado');
+}
+
+function guardarPersona(){
+  const ap=document.getElementById('p-apell').value.trim().toUpperCase();
+  const nm=document.getElementById('p-nomb').value.trim();
+  if(!ap||!nm){toast('Apellidos y nombres son obligatorios','err');return;}
+  const obj={
+    id:editPI>=0?P[editPI].id:uuid(),
+    grado:document.getElementById('p-grado').value,
+    escal:document.getElementById('p-escal').value,
+    apell:ap,nomb:nm,
+    run:document.getElementById('p-run').value.trim(),
+    cat:document.getElementById('p-cat').value,
+    cargo:document.getElementById('p-cargo').value.trim(),
+    ang:document.getElementById('p-ang').value,
+    obs:document.getElementById('p-obs').value.trim()
+  };
+  if(editPI>=0)P[editPI]=obj;else P.push(obj);
+  editPI=-1;
+  document.getElementById('d-pers-tit').textContent='🪖 Registrar integrante';
+  document.getElementById('p-delete-row').style.display='none';
+  closeD('d-persona');render();dSave();toast('Integrante guardado','ok');
+}
+
+// ══════════════════════════════════════════
+// ANOTACIONES
+// ══════════════════════════════════════════
+function openAnot(tipo,pid){
+  editAI=null;
+  document.getElementById('d-anot-tit').textContent={merito:'✓ Nuevo mérito',demerito:'✕ Nuevo demérito',constancia:'≡ Nueva constancia'}[tipo];
+  document.getElementById('a-tipo').value=tipo;
+  document.getElementById('a-fecha').value=hoy();
+  document.getElementById('a-notif').value='pendiente';
+  ['a-desc','a-antec','a-resol','a-obs','a-docor'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('btn-ga').textContent='Registrar en HV';
+  document.getElementById('anot-del').style.display='none';
+  cambioTipoAnot();
+  const target=pid||hvPid;
+  if(target&&P.find(x=>x.id===target)){document.getElementById('a-pers').value=target;filtrarConc();}
+  openD('d-anot');
+}
+
+function editarAnot(id){
+  const a=A.find(x=>x.id===id);if(!a)return;
+  editAI=id;
+  document.getElementById('d-anot-tit').textContent={merito:'✎ Editar mérito',demerito:'✎ Editar demérito',constancia:'✎ Editar constancia'}[a.tipo];
+  document.getElementById('a-pers').value=a.pid;
+  document.getElementById('a-tipo').value=a.tipo;
+  document.getElementById('a-fecha').value=a.fecha;
+  document.getElementById('a-notif').value=a.notif||'pendiente';
+  cambioTipoAnot();filtrarConc();
+  if(a.tipo!=='constancia'){
+    document.getElementById('a-conc').value=a.conc||'1';
+    document.getElementById('a-punt').value=a.punt||'+0.50';
+    document.getElementById('a-desc').value=a.desc||'';
+    document.getElementById('a-antec').value=a.antec||'';
+    document.getElementById('a-resol').value=a.resol||'';
+  }else{
+    document.getElementById('a-tconst').value=a.tconst||'otro';
+    cambioConst();
+    setTimeout(()=>{
+      if(a.cFechaIni){const fi=document.getElementById('c-fi');if(fi)fi.value=a.cFechaIni;}
+      if(a.cFechaFin){const ft=document.getElementById('c-ft');if(ft)ft.value=a.cFechaFin;}
+      if(a.cdias){const cd=document.getElementById('c-dias');if(cd)cd.value=a.cdias;}
+      if(a.evintRes){const ev=document.getElementById('c-evint');if(ev)ev.value=a.evintRes;}
+    },100);
+    document.getElementById('a-obs').value=a.obs||'';
+    document.getElementById('a-docor').value=a.docOrig||'';
+  }
+  document.getElementById('btn-ga').textContent='Guardar cambios';
+  document.getElementById('anot-del').style.display='block';
+  openD('d-anot');
+}
+
+function eliminarAnot(){
+  if(!editAI)return;
+  if(!confirm('¿Eliminar esta anotación?'))return;
+  A=A.filter(x=>x.id!==editAI);editAI=null;closeD('d-anot');render();dSave();toast('Anotación eliminada');
+}
+
+function cambioTipoAnot(){
+  const t=document.getElementById('a-tipo').value;
+  document.getElementById('blq-md').style.display=t!=='constancia'?'block':'none';
+  document.getElementById('blq-const').style.display=t==='constancia'?'block':'none';
+  const sp=document.getElementById('a-punt');
+  if(t==='merito')sp.innerHTML='<option value="+0.50">+0,50 pts</option><option value="+1.00">+1,00 pt (distinción)</option>';
+  else if(t==='demerito')sp.innerHTML=[-0.5,-1,-1.5,-2,-2.5,-3,-3.5,-4,-4.5,-5].map(v=>`<option value="${v.toFixed(2)}">−${Math.abs(v).toFixed(2).replace('.',',')} pts</option>`).join('');
+}
+
+function filtrarConc(){
+  const pid=document.getElementById('a-pers').value;
+  const p=P.find(x=>x.id===pid);if(!p)return;
+  const cat=CATS[p.cat]||CATS.sof;
+  Array.from(document.getElementById('a-conc').options).forEach(o=>{o.disabled=!cat.concs.includes(o.value);});
+  const sel=document.getElementById('a-conc');
+  if(sel.options[sel.selectedIndex]?.disabled){const f=Array.from(sel.options).find(o=>!o.disabled);if(f)sel.value=f.value;}
+}
+
+function cambioConst(){
+  const tc=document.getElementById('a-tconst').value;
+  const el=document.getElementById('campos-const');
+  const cf=['lic_total','lic_parcial','lic_prenatal','lic_hijo','com_nac','com_ext','feriado','permiso_psr'];
+  const cd=['lic_total','lic_parcial','lic_prenatal','lic_hijo','feriado'];
+  if(tc==='evint'){el.innerHTML=`<div class="fg"><div class="fr"><label>Fecha EVINT</label><input type="date" id="c-fi"></div><div class="fr"><label>Resultado</label><select id="c-evint"><option value="conforme">Se declaró conforme</option><option value="reconsiderado">Presentó reconsideración</option><option value="negado">Se negó a firmar</option></select></div></div>`;}
+  else if(cf.includes(tc)){el.innerHTML=`<div class="fg"><div class="fr"><label>Fecha inicio</label><input type="date" id="c-fi"></div><div class="fr"><label>Fecha término</label><input type="date" id="c-ft"></div></div>${cd.includes(tc)?'<div class="fr"><label>Cantidad de días</label><input type="number" id="c-dias" min="0.5" step="0.5" placeholder="0" style="max-width:120px"></div>':''}`;}
+  else{el.innerHTML='';}
+}
+
+function guardarAnot(){
+  const pid=document.getElementById('a-pers').value;
+  const tipo=document.getElementById('a-tipo').value;
+  const fecha=document.getElementById('a-fecha').value;
+  if(!pid||!fecha){toast('Personal y fecha son obligatorios','err');return;}
+  const obj={id:editAI||uuid(),pid,tipo,fecha,notif:document.getElementById('a-notif').value};
+  if(tipo==='constancia'){
+    const tc=document.getElementById('a-tconst').value;if(!tc){toast('Selecciona tipo de constancia','err');return;}
+    obj.tconst=tc;obj.obs=document.getElementById('a-obs').value.trim();obj.docOrig=document.getElementById('a-docor').value.trim();
+    const fi=document.getElementById('c-fi'),ft=document.getElementById('c-ft'),cd=document.getElementById('c-dias'),ev=document.getElementById('c-evint');
+    if(fi&&fi.value)obj.cFechaIni=fi.value;if(ft&&ft.value)obj.cFechaFin=ft.value;
+    if(fi&&ft&&(fi.value||ft.value))obj.cfechas=`del ${fi.value||'—'} al ${ft.value||'—'}`;
+    if(cd&&cd.value)obj.cdias=cd.value;if(ev)obj.evintRes=ev.value;
+  }else{
+    const desc=document.getElementById('a-desc').value.trim();if(!desc){toast('La descripción es obligatoria','err');return;}
+    obj.conc=document.getElementById('a-conc').value;obj.punt=document.getElementById('a-punt').value;
+    obj.desc=desc;obj.antec=document.getElementById('a-antec').value.trim();
+    let resol=document.getElementById('a-resol').value.trim();
+    if(!resol&&!editAI&&CFG.nres){const y=new Date().getFullYear();resol=`${CFG.nres}/${String(corrRes).padStart(3,'0')}/${y}`;corrRes++;}
+    obj.resol=resol;
+  }
+  if(editAI)A=A.map(x=>x.id===editAI?obj:x);else A.push(obj);
+  editAI=null;closeD('d-anot');hvPid=pid;
+  tab('s-hv',document.querySelectorAll('.ni')[1]);
+  render();dSave();toast('Anotación guardada','ok');
+}
+
+function cycleNotif(id){
+  const a=A.find(x=>x.id===id);if(!a)return;
+  const opts=['pendiente','conforme','reconsiderado','negado'];
+  a.notif=opts[(opts.indexOf(a.notif)+1)%opts.length];
+  render();dSave();toast('Estado actualizado');
+}
+
+// ══════════════════════════════════════════
+// DÍAS ADMIN
+// ══════════════════════════════════════════
+function openDiasAnot(){editDI=null;document.getElementById('d-dias-tit').textContent='📅 Días administrativos';document.getElementById('dia-fecha').value=hoy();document.getElementById('dia-dias').value='1';['dia-autor','dia-doc','dia-obs'].forEach(id=>document.getElementById(id).value='');document.getElementById('btn-gd').textContent='Guardar';document.getElementById('dia-del').style.display='none';openD('d-dias');}
+function openDiasAnotP(pid){openDiasAnot();if(pid)document.getElementById('dia-pers').value=pid;}
+function editarDia(id){
+  const d=DIAS.find(x=>x.id===id);if(!d)return;editDI=id;
+  document.getElementById('d-dias-tit').textContent='✎ Editar días';
+  document.getElementById('dia-pers').value=d.pid;document.getElementById('dia-tipo').value=d.tipo;
+  document.getElementById('dia-fecha').value=d.fecha;document.getElementById('dia-dias').value=d.dias;
+  document.getElementById('dia-autor').value=d.autor||'';document.getElementById('dia-doc').value=d.docOrig||'';
+  document.getElementById('dia-obs').value=d.obs||'';
+  document.getElementById('btn-gd').textContent='Guardar cambios';document.getElementById('dia-del').style.display='block';openD('d-dias');
+}
+function eliminarDia(){if(!editDI)return;if(!confirm('¿Eliminar este registro?'))return;DIAS=DIAS.filter(x=>x.id!==editDI);editDI=null;closeD('d-dias');renderDias();dSave();toast('Registro eliminado');}
+function guardarDia(){
+  const pid=document.getElementById('dia-pers').value;const fecha=document.getElementById('dia-fecha').value;const dias=parseFloat(document.getElementById('dia-dias').value);
+  if(!pid||!fecha||!dias||dias<=0){toast('Integrante, fecha y días son obligatorios','err');return;}
+  const obj={id:editDI||uuid(),pid,tipo:document.getElementById('dia-tipo').value,fecha,dias,autor:document.getElementById('dia-autor').value.trim(),docOrig:document.getElementById('dia-doc').value.trim(),obs:document.getElementById('dia-obs').value.trim()};
+  if(editDI)DIAS=DIAS.map(x=>x.id===editDI?obj:x);else DIAS.push(obj);
+  editDI=null;closeD('d-dias');renderDias();dSave();toast('Guardado','ok');
+}
+
+// ══════════════════════════════════════════
+// LICENCIAS MÉDICAS
+// ══════════════════════════════════════════
+function openLicAnot(){editLI=null;document.getElementById('d-lic-tit').textContent='🏥 Nueva licencia médica';document.getElementById('lic-fi').value=hoy();document.getElementById('lic-ft').value=hoy();['lic-dias','lic-nro','lic-medico','lic-diag'].forEach(id=>document.getElementById(id).value='');document.getElementById('btn-gl').textContent='Guardar';document.getElementById('lic-del').style.display='none';openD('d-lic');}
+function openLicAnotP(pid){openLicAnot();if(pid)document.getElementById('lic-pers').value=pid;}
+function editarLic(id){
+  const l=LICS.find(x=>x.id===id);if(!l)return;editLI=id;
+  document.getElementById('d-lic-tit').textContent='✎ Editar licencia';
+  document.getElementById('lic-pers').value=l.pid;document.getElementById('lic-tipo').value=l.tipo;
+  document.getElementById('lic-fi').value=l.fi;document.getElementById('lic-ft').value=l.ft;
+  document.getElementById('lic-dias').value=l.dias;document.getElementById('lic-nro').value=l.nro||'';
+  document.getElementById('lic-medico').value=l.medico||'';document.getElementById('lic-diag').value=l.diag||'';
+  document.getElementById('btn-gl').textContent='Guardar cambios';document.getElementById('lic-del').style.display='block';openD('d-lic');
+}
+function eliminarLic(){if(!editLI)return;if(!confirm('¿Eliminar esta licencia?'))return;LICS=LICS.filter(x=>x.id!==editLI);editLI=null;closeD('d-lic');renderLicencias();dSave();toast('Licencia eliminada');}
+function guardarLic(){
+  const pid=document.getElementById('lic-pers').value;const fi=document.getElementById('lic-fi').value;const ft=document.getElementById('lic-ft').value;const dias=parseInt(document.getElementById('lic-dias').value);
+  if(!pid||!fi||!ft||!dias){toast('Integrante, fechas y días son obligatorios','err');return;}
+  const obj={id:editLI||uuid(),pid,tipo:document.getElementById('lic-tipo').value,fi,ft,dias,nro:document.getElementById('lic-nro').value.trim(),medico:document.getElementById('lic-medico').value.trim(),diag:document.getElementById('lic-diag').value.trim()};
+  if(editLI)LICS=LICS.map(x=>x.id===editLI?obj:x);else LICS.push(obj);
+  editLI=null;closeD('d-lic');renderLicencias();dSave();toast('Licencia guardada','ok');
+}
+
+// ══════════════════════════════════════════
+// EVINT
+// ══════════════════════════════════════════
+function openEvintP(pid,num){
+  editEI=null;
+  document.getElementById('ev-pers').value=pid;
+  document.getElementById('ev-num').value=num;
+  document.getElementById('ev-fecha').value=hoy();
+  document.getElementById('ev-realiza').value='si';
+  document.getElementById('d-evint-tit').textContent=`📋 EVINT N°${num}`;
+  document.getElementById('ev-del').style.display='none';
+  cambioEvintPers();openD('d-evint');
+}
+
+function editarEvint(id){
+  const ev=EVINTS.find(x=>x.id===id);if(!ev)return;editEI=id;
+  document.getElementById('ev-pers').value=ev.pid;
+  document.getElementById('ev-num').value=ev.num;
+  document.getElementById('ev-fecha').value=ev.fecha;
+  document.getElementById('ev-realiza').value=ev.realiza||'si';
+  document.getElementById('d-evint-tit').textContent=`✎ Editar EVINT N°${ev.num}`;
+  document.getElementById('ev-del').style.display='block';
+  cambioEvintPers();
+  // Cargar respuestas guardadas
+  if(ev.respuestas){
+    setTimeout(()=>{
+      Object.entries(ev.respuestas).forEach(([k,v])=>{
+        const el=document.querySelector(`input[name="${k}"][value="${v}"]`);
+        if(el)el.checked=true;
+      });
+      // Justificaciones
+      if(ev.justA)document.getElementById('ev-justA').value=ev.justA;
+      if(ev.justB)document.getElementById('ev-justB').value=ev.justB;
+      if(ev.justC)document.getElementById('ev-justC').value=ev.justC;
+      if(ev.justD&&document.getElementById('ev-justD'))document.getElementById('ev-justD').value=ev.justD;
+      if(ev.recurso)document.getElementById('ev-recurso').value=ev.recurso;
+      if(ev.recursoFecha)document.getElementById('ev-recurso-fecha').value=ev.recursoFecha;
+    },200);
+  }
+  openD('d-evint');
+}
+
+function eliminarEvint(){if(!editEI)return;if(!confirm('¿Eliminar esta EVINT?'))return;EVINTS=EVINTS.filter(x=>x.id!==editEI);editEI=null;closeD('d-evint');renderEvint();renderPuntajes();dSave();toast('EVINT eliminada');}
+
+function cambioEvintPers(){
+  const pid=document.getElementById('ev-pers').value;
+  const p=P.find(x=>x.id===pid);if(!p)return;
+  const descriptores=(p.cat==='clase'||p.cat==='som')?EVINT_CLASE:EVINT_SOF;
+  const cat=CATS[p.cat]||CATS.sof;
+  const num=document.getElementById('ev-num').value;
+  const concsUsados=cat.concs;
+
+  // Agrupar descriptores por concepto
+  const grupos={};
+  descriptores.filter(d=>concsUsados.includes(d.conc)).forEach(d=>{
+    if(!grupos[d.conc])grupos[d.conc]=[];
+    grupos[d.conc].push(d);
+  });
+
+  const freqCols=['Siempre','C.Siem.','Regular.','Ocas.','C.Nca.','No Obs.'];
+  const freqKeys=['siempre','casi_siempre','regularmente','ocasionalmente','casi_nunca','no_observado'];
+
+  let html=`
+  <div class="abox info" style="margin-bottom:8px;font-size:11px">
+    EVINT N°${num} — Categoría: <b>${CATS[p.cat]?.label}</b> — ${descriptores.filter(d=>concsUsados.includes(d.conc)).length} descriptores
+  </div>
+  <div style="overflow-x:auto">
+    <div style="min-width:520px">
+      <div style="display:flex;background:var(--old);border-radius:var(--r) var(--r) 0 0">
+        <div style="flex:1;padding:6px 10px;font-size:10px;color:rgba(255,255,255,.8);font-weight:700">DESCRIPTOR</div>
+        ${freqCols.map(c=>`<div style="width:52px;text-align:center;padding:6px 2px;font-size:9px;color:rgba(255,255,255,.8);border-left:.5px solid rgba(255,255,255,.12)">${c}</div>`).join('')}
+      </div>`;
+
+  concsUsados.forEach(c=>{
+    const descs=grupos[c]||[];
+    html+=`<div style="background:var(--olp);padding:5px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--old);border-top:1px solid var(--bo)">N°${c} ${CNOMS[c]}</div>`;
+    descs.forEach(d=>{
+      html+=`<div style="display:flex;align-items:center;border-bottom:.5px solid var(--bo);min-height:42px">
+        <div style="flex:1;padding:7px 10px;font-size:11px;color:var(--ink);line-height:1.4">${d.num}. ${d.texto}</div>
+        ${freqKeys.map(fk=>`<div style="width:52px;display:flex;align-items:center;justify-content:center;border-left:.5px solid var(--bo);height:42px">
+          <input type="radio" name="d${d.num}" value="${fk}" style="width:14px;height:14px;accent-color:var(--old);cursor:pointer">
+        </div>`).join('')}
+      </div>`;
+    });
+  });
+
+  html+=`</div></div>
+  <div class="fsec" style="margin-top:12px">Justificaciones</div>
+  <div class="fr"><label>A — Justificación (Sobre 75% de Siempre)</label><textarea id="ev-justA" placeholder="Redacte la justificación si corresponde..." style="min-height:55px"></textarea></div>
+  <div class="fr"><label>B — Justificación (Para cada Casi Nunca)</label><textarea id="ev-justB" placeholder="Redacte la justificación por cada descriptor Casi Nunca..." style="min-height:55px"></textarea></div>
+  <div class="fr"><label>C — Justificación (Para cada No Observado)</label><textarea id="ev-justC" placeholder="Redacte la justificación por cada descriptor No Observado..." style="min-height:55px"></textarea></div>
+  ${num==2?`<div class="fr"><label>D — Justificación (Secretario y/o Fiscal de ISA)</label><textarea id="ev-justD" style="min-height:55px" placeholder="Si aplica..."></textarea></div>`:''}
+  <div class="fsec">Recursos</div>
+  <div class="fg">
+    <div class="fr"><label>Tipo de recurso</label>
+      <select id="ev-recurso">
+        <option value="">Sin recurso</option>
+        <option value="reposicion">Reposición y jerárquico en subsidio</option>
+        <option value="jerarquico">Jerárquico</option>
+      </select></div>
+    <div class="fr"><label>Fecha presentó recurso</label><input type="date" id="ev-recurso-fecha"></div>
+  </div>`;
+
+  document.getElementById('ev-form-body').innerHTML=html;
+}
+
+function guardarEvint(){
+  const pid=document.getElementById('ev-pers').value;
+  const num=parseInt(document.getElementById('ev-num').value);
+  const fecha=document.getElementById('ev-fecha').value;
+  const realiza=document.getElementById('ev-realiza').value;
+  if(!pid||!fecha){toast('Integrante y fecha son obligatorios','err');return;}
+  const p=P.find(x=>x.id===pid);if(!p)return;
+  const descriptores=(p.cat==='clase'||p.cat==='som')?EVINT_CLASE:EVINT_SOF;
+  const cat=CATS[p.cat]||CATS.sof;
+  const resp={};
+  descriptores.filter(d=>cat.concs.includes(d.conc)).forEach(d=>{
+    const sel=document.querySelector(`input[name="d${d.num}"]:checked`);
+    if(sel)resp[`d${d.num}`]=sel.value;
+  });
+  const obj={
+    id:editEI||uuid(),pid,num,fecha,realiza,respuestas:resp,
+    justA:document.getElementById('ev-justA')?.value.trim()||'',
+    justB:document.getElementById('ev-justB')?.value.trim()||'',
+    justC:document.getElementById('ev-justC')?.value.trim()||'',
+    justD:document.getElementById('ev-justD')?.value.trim()||'',
+    recurso:document.getElementById('ev-recurso')?.value||'',
+    recursoFecha:document.getElementById('ev-recurso-fecha')?.value||''
+  };
+  // Eliminar EVINT anterior del mismo número si existe y no es edición
+  if(!editEI)EVINTS=EVINTS.filter(x=>!(x.pid===pid&&x.num===num));
+  if(editEI)EVINTS=EVINTS.map(x=>x.id===editEI?obj:x);else EVINTS.push(obj);
+  editEI=null;closeD('d-evint');renderEvint();renderPuntajes();dSave();toast('EVINT guardada','ok');
+}
+
+// ══════════════════════════════════════════
+// RESOLUCIONES
+// ══════════════════════════════════════════
+function verRes(aid){
+  const a=A.find(x=>x.id===aid);if(!a)return;
+  const p=P.find(x=>x.id===a.pid);if(!p)return;
+  document.getElementById('res-preview').innerHTML=genRes(p,a);
+  openD('d-res-prev');
+}
+
+function genRes(p,a){
+  const unidad=(CFG.unidad||'[UNIDAD]').toUpperCase();
+  const es_m=a.tipo==='merito';
+  return`<div class="rp">
+    <div class="rh">
+      <div class="rht">EJÉRCITO DE CHILE</div>
+      <div style="font-size:11px;text-transform:uppercase">${unidad}</div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:5px">
+        <span>EJEMPLAR N°___/ HOJA N°___/ Dispone anotación de mé${es_m?'rito':'dérito'}</span>
+        <span>TEJAS VERDES,</span>
+      </div>
+    </div>
+    <div class="rn">RESOLUCIÓN EXENTA N° ${a.resol||'[N°]'}<br><span style="font-size:11px">DEL ${unidad}</span></div>
+    <div class="rs">VISTOS:</div>
+    <div class="rit">- La Ley N° 18.948, "Orgánica Constitucional de las Fuerzas Armadas".</div>
+    <div class="rit">- El Estatuto del Personal de las Fuerzas Armadas, DFL (G) N° 1 de 1997.</div>
+    <div class="rit">- CAP-01001 "Cartilla de Calificaciones".</div>
+    ${!es_m?`<div class="rit">- Las atribuciones que me confiere el DNL-911 "Reglamento de Disciplina para las Fuerzas Armadas".</div>`:''}
+    <div class="rs" style="margin-top:9px">CONSIDERANDO:</div>
+    <div class="rit">- ${a.antec||'[ANTECEDENTE]'}.</div>
+    <div class="rs" style="margin-top:9px">RESUELVO:</div>
+    <div class="rtx"><strong>${es_m?'Felicítese':'Sáncionese'}</strong> al ${p.grado} ${p.apell} ${p.nomb} ${a.desc||'[DESCRIPCIÓN]'}. La presente ${es_m?'felicitación':'demérito'} le será estampada en su correspondiente Hoja de Vida en el concepto N°<strong>${a.conc} "${CNOMS[a.conc]}"</strong>, con ${PTXT[a.punt]||a.punt}.</div>
+    <div style="margin-top:7px;margin-left:1.4rem">Anótese, notifíquese, regístrese y archívese.</div>
+    <div class="rfi">
+      <div class="rfl"><div style="font-weight:700">${CFG.nombre||'[NOMBRE]'}</div><div>${CFG.grado||'[GRADO]'}</div><div>Calificador Directo</div></div>
+      <div class="rfl"><div style="font-weight:700">${CFG.jpm||'[JPM]'}</div><div>${p.grado}</div><div>${CFG.jpmCargo||'[CARGO JPM]'}</div></div>
+    </div>
+    <div style="font-size:9px;font-style:italic;text-align:center;margin-top:.75rem">(Firmas y distribución al reverso)</div>
+    <div class="rdi"><table>
+      <tr><td style="font-weight:700">DISTRIBUCIÓN:</td><td>Firma</td><td>: _______________</td></tr>
+      <tr><td>S-1</td><td>Tomó conocimiento</td><td>: _______________</td></tr>
+      <tr><td>${CFG.abrev||'UNIDAD'} (Archivo)</td><td>Me declaro conforme</td><td>: _______________</td></tr>
+      <tr><td>2 Ejs. 1 Hja.</td><td>Reconsideró</td><td>: _______________</td></tr>
+      <tr><td></td><td>Se niega a firmar</td><td>: _______________</td></tr>
+    </table></div>
+  </div>`;
+}
+
+function imprimirRes(){
+  const cont=document.getElementById('res-preview').innerHTML;
+  const w=window.open('','_blank','width=820,height=950');
+  w.document.write(`<!DOCTYPE html><html><head><title>Resolución Exenta</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Times New Roman',serif;font-size:12px;padding:2cm;color:#000;line-height:1.7}.rp{}.rh{text-align:center;border-bottom:2px solid #000;padding-bottom:.7rem;margin-bottom:.7rem}.rht{font-size:14px;font-weight:bold;text-transform:uppercase;letter-spacing:.06em}.rn{font-weight:bold;text-transform:uppercase;text-align:center;margin-bottom:.7rem}.rs{font-weight:bold;text-transform:uppercase;margin-top:10px;margin-bottom:3px}.rit{margin-left:1.4rem;margin-bottom:3px}.rtx{text-align:justify;margin-left:1.4rem}.rfi{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:1.4rem;text-align:center}.rfl{border-top:1px solid #000;padding-top:4px;margin-top:1.4rem;font-size:11px}.rdi table{width:100%;border-collapse:collapse;margin-top:.7rem}td{padding:3px 8px;border:.5px solid #aaa}@media print{body{padding:.5cm}}</style></head><body>${cont}</body></html>`);
+  w.document.close();setTimeout(()=>w.print(),500);
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+document.getElementById('a-pers').addEventListener('change',filtrarConc);
+
+// ── ARRANQUE CON AUTH ──
+function mostrarLogin(){
+  document.getElementById('loading-screen').classList.add('gone');
+  document.getElementById('login-screen').classList.remove('gone');
+  document.getElementById('app').style.visibility='hidden';
+}
+
+function mostrarApp(user){
+  document.getElementById('login-screen').classList.add('gone');
+  document.getElementById('app').style.visibility='visible';
+  actualizarUIUsuario(user);
+}
+
+// Seguro de emergencia: si auth tarda más de 8s, mostrar login
+const authTimeout=setTimeout(()=>{
+  document.getElementById('loading-screen').classList.add('gone');
+  document.getElementById('login-screen').classList.remove('gone');
+},8000);
+
+// Escuchar cambios de autenticación
+const fbOk=initFirebase();
+if(fbOk&&fbAuth){
+  // Verificar si venimos de un redirect de Google
+  checkRedirectResult().catch(e=>console.warn(e));
+  fbAuth.onAuthStateChanged(async user=>{
+    clearTimeout(authTimeout);
+    if(user){
+      // Usuario autenticado — cargar sus datos y mostrar app
+      currentUser=user;
+      mostrarApp(user);
+      await loadData(user.uid);
+    }else{
+      // Sin sesión — mostrar login
+      currentUser=null;
+      P=[];A=[];DIAS=[];LICS=[];EVINTS=[];CFG={};corrRes=1;
+      ocultarLoading();
+      mostrarLogin();
+      actualizarUIUsuario(null);
+    }
+  });
+}else{
+  // Sin Firebase — modo local
+  ocultarLoading();
+  document.getElementById('login-screen').classList.add('gone');
+  document.getElementById('app').style.visibility='visible';
+  cargarDesdeLocal();
+  initUI();render();
+}
+</script>
+</body>
+</html>
